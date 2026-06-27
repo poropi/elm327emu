@@ -23,7 +23,8 @@ SppServer::SppServer(OnRx on_rx, OnConn on_conn)
 void SppServer::Start() {
   running_ = true;
   // Begin listening asynchronously; capture this (lifetime owned by plugin).
-  [this]() -> IAsyncAction {
+  // fire_and_forget keeps the UI/STA thread responsive (no blocking .get()).
+  [this]() -> fire_and_forget {
     provider_ = co_await RfcommServiceProvider::CreateAsync(
         RfcommServiceId::FromUuid(kSppUuid));
     listener_ = StreamSocketListener();

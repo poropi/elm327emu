@@ -24,7 +24,9 @@ add_executable(${BINARY_NAME} WIN32
 apply_standard_settings(${BINARY_NAME})
 
 # Enable C++/WinRT (C++17 + WinRT runtime) for the Bluetooth transport.
+# /await enables C++/WinRT coroutines (co_await) under C++17.
 target_compile_features(${BINARY_NAME} PRIVATE cxx_std_17)
+target_compile_options(${BINARY_NAME} PRIVATE /await)
 target_link_libraries(${BINARY_NAME} PRIVATE "windowsapp")
 
 # Add preprocessor definitions for the build version.

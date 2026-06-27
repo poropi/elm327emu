@@ -153,13 +153,23 @@ void Elm327Plugin::Register(flutter::BinaryMessenger* messenger) {
           result->Success();
         } else if (method == "send") {
           if (auto* args = std::get_if<EncodableMap>(call.arguments())) {
-            auto t = std::get<std::string>(args->at(EncodableValue("transport")));
-            auto bytes = std::get<std::vector<uint8_t>>(
-                args->at(EncodableValue("bytes")));
-            if (t == "ble" && ble_) {
-              ble_->Send(bytes);
-            } else if (t == "spp" && spp_) {
-              spp_->Send(bytes);
+            auto t_it = args->find(EncodableValue("transport"));
+            auto b_it = args->find(EncodableValue("bytes"));
+            const std::string* t =
+                (t_it != args->end())
+                    ? std::get_if<std::string>(&t_it->second)
+                    : nullptr;
+            // Dart sends bytes as a Uint8List -> std::vector<uint8_t>.
+            const std::vector<uint8_t>* bytes =
+                (b_it != args->end())
+                    ? std::get_if<std::vector<uint8_t>>(&b_it->second)
+                    : nullptr;
+            if (t && bytes) {
+              if (*t == "ble" && ble_) {
+                ble_->Send(*bytes);
+              } else if (*t == "spp" && spp_) {
+                spp_->Send(*bytes);
+              }
             }
           }
           result->Success();
