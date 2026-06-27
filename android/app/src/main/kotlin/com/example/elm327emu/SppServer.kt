@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
+import android.util.Log
 import java.util.UUID
 import kotlin.concurrent.thread
 
@@ -13,8 +14,8 @@ class SppServer(
     private val onConn: (String, String) -> Unit,
 ) {
     private val sppUuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
-    private var serverSocket: BluetoothServerSocket? = null
-    private var socket: BluetoothSocket? = null
+    @Volatile private var serverSocket: BluetoothServerSocket? = null
+    @Volatile private var socket: BluetoothSocket? = null
     @Volatile private var running = false
 
     fun start() {
@@ -29,7 +30,8 @@ class SppServer(
                     onConn("connected", s.remoteDevice?.address ?: "")
                     readLoop(s)
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.e("SppServer", "accept loop error", e)
             }
         }
     }
@@ -52,8 +54,10 @@ class SppServer(
 
     fun send(bytes: ByteArray) {
         try {
-            socket?.outputStream?.write(bytes)
-            socket?.outputStream?.flush()
+            socket?.outputStream?.let { out ->
+                out.write(bytes)
+                out.flush()
+            }
         } catch (_: Exception) {}
     }
 
