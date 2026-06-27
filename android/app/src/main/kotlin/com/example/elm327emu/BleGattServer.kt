@@ -14,7 +14,7 @@ class BleGattServer(
     private var gattServer: BluetoothGattServer? = null
     private var advertiser: BluetoothLeAdvertiser? = null
     private var notifyChar: BluetoothGattCharacteristic? = null
-    private var device: BluetoothDevice? = null
+    @Volatile private var device: BluetoothDevice? = null
 
     fun start(useFff0: Boolean) {
         val mgr = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
@@ -26,27 +26,39 @@ class BleGattServer(
         val notifyUuid = uuid(if (useFff0) "FFF1" else "FFE1")
 
         val service = BluetoothGattService(serviceUuid, BluetoothGattService.SERVICE_TYPE_PRIMARY)
-        val writeChar = BluetoothGattCharacteristic(
-            writeUuid,
-            BluetoothGattCharacteristic.PROPERTY_WRITE or BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE,
-            BluetoothGattCharacteristic.PERMISSION_WRITE,
-        )
-        notifyChar = BluetoothGattCharacteristic(
-            notifyUuid,
-            BluetoothGattCharacteristic.PROPERTY_NOTIFY,
-            BluetoothGattCharacteristic.PERMISSION_READ,
-        ).also {
-            it.addDescriptor(
-                BluetoothGattDescriptor(
-                    uuid("2902"),
-                    BluetoothGattDescriptor.PERMISSION_READ or BluetoothGattDescriptor.PERMISSION_WRITE,
-                )
-            )
+        val writeProps = BluetoothGattCharacteristic.PROPERTY_WRITE or BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE
+        val notifyProp = BluetoothGattCharacteristic.PROPERTY_NOTIFY
+        val cccd = { BluetoothGattDescriptor(uuid("2902"), BluetoothGattDescriptor.PERMISSION_READ or BluetoothGattDescriptor.PERMISSION_WRITE) }
+
+        if (notifyUuid == writeUuid) {
+            // FFE0 profile: single characteristic handles both WRITE and NOTIFY
+            notifyChar = BluetoothGattCharacteristic(writeUuid, writeProps or notifyProp, BluetoothGattCharacteristic.PERMISSION_WRITE).also { it.addDescriptor(cccd()) }
+            service.addCharacteristic(notifyChar)
+        } else {
+            // FFF0 profile: separate write (FFF2) and notify (FFF1) characteristics
+            val writeChar = BluetoothGattCharacteristic(writeUuid, writeProps, BluetoothGattCharacteristic.PERMISSION_WRITE)
+            notifyChar = BluetoothGattCharacteristic(notifyUuid, notifyProp, BluetoothGattCharacteristic.PERMISSION_READ).also { it.addDescriptor(cccd()) }
+            service.addCharacteristic(writeChar)
+            service.addCharacteristic(notifyChar)
         }
-        service.addCharacteristic(writeChar)
-        if (notifyUuid != writeUuid) service.addCharacteristic(notifyChar)
+
+        advertiser = adapter.bluetoothLeAdvertiser
+        val settings = AdvertiseSettings.Builder()
+            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
+            .setConnectable(true)
+            .build()
+        val data = AdvertiseData.Builder()
+            .setIncludeDeviceName(true)
+            .addServiceUuid(ParcelUuid(serviceUuid))
+            .build()
 
         gattServer = mgr.openGattServer(context, object : BluetoothGattServerCallback() {
+            override fun onServiceAdded(status: Int, service: BluetoothGattService) {
+                if (status == BluetoothGatt.GATT_SUCCESS) {
+                    advertiser?.startAdvertising(settings, data, object : AdvertiseCallback() {})
+                }
+            }
+
             override fun onConnectionStateChange(d: BluetoothDevice, status: Int, newState: Int) {
                 device = if (newState == BluetoothProfile.STATE_CONNECTED) d else null
                 onConn(if (newState == BluetoothProfile.STATE_CONNECTED) "connected" else "disconnected", d.address ?: "")
@@ -72,17 +84,6 @@ class BleGattServer(
             }
         })
         gattServer?.addService(service)
-
-        advertiser = adapter.bluetoothLeAdvertiser
-        val settings = AdvertiseSettings.Builder()
-            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
-            .setConnectable(true)
-            .build()
-        val data = AdvertiseData.Builder()
-            .setIncludeDeviceName(true)
-            .addServiceUuid(ParcelUuid(serviceUuid))
-            .build()
-        advertiser?.startAdvertising(settings, data, object : AdvertiseCallback() {})
     }
 
     /** 応答を MTU(20) ごとに分割 Notify する。 */
