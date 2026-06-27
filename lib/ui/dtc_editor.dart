@@ -11,6 +11,12 @@ class DtcEditor extends StatefulWidget {
 class _DtcEditorState extends State<DtcEditor> {
   final _ctrl = TextEditingController();
   @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final c = context.watch<EmulatorController>();
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
