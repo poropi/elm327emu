@@ -28,5 +28,7 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>ELM327 エミュレータが BLE で接続を受け付けるために使用します。</string>
 </dict>
 </plist>
