@@ -56,17 +56,22 @@ void BleGattServer::Start(bool use_fff0) {
     auto service = provider_.Service();
 
     // Forwards a write request to onRx and acks if the client wants a response.
-    auto writeHandler =
-        [this](GattLocalCharacteristic const&,
-               GattWriteRequestedEventArgs const& args) -> fire_and_forget {
-      auto deferral = args.GetDeferral();
-      auto request = co_await args.GetRequestAsync();
-      auto bytes = BufferToVector(request.Value());
-      if (on_rx_) on_rx_(bytes);
-      if (request.Option() == GattWriteOption::WriteWithResponse) {
-        request.Respond();
-      }
-      deferral.Complete();
+    // WriteRequested is a void-returning TypedEventHandler, so the outer lambda
+    // returns void and kicks off a detached coroutine for the async work.
+    // |args| is captured by value into the coroutine to keep it alive across
+    // the co_await suspension point.
+    auto writeHandler = [this](GattLocalCharacteristic const&,
+                               GattWriteRequestedEventArgs const& args) {
+      [this, args]() -> fire_and_forget {
+        auto deferral = args.GetDeferral();
+        auto request = co_await args.GetRequestAsync();
+        auto bytes = BufferToVector(request.Value());
+        if (on_rx_) on_rx_(bytes);
+        if (request.Option() == GattWriteOption::WriteWithResponse) {
+          request.Respond();
+        }
+        deferral.Complete();
+      }();
     };
 
     if (notifyUuid == writeUuid) {
@@ -124,15 +129,21 @@ void BleGattServer::Send(const std::vector<uint8_t>& bytes) {
 
 void BleGattServer::Stop() {
   // Revoke event handlers before releasing the characteristics.
+  // (winrt::event_token has no portable operator bool; compare .value.)
   if (notify_char_) {
-    if (notify_write_token_) notify_char_.WriteRequested(notify_write_token_);
-    if (subscribe_token_) {
+    if (notify_write_token_.value != 0) {
+      notify_char_.WriteRequested(notify_write_token_);
+    }
+    if (subscribe_token_.value != 0) {
       notify_char_.SubscribedClientsChanged(subscribe_token_);
     }
   }
-  if (write_char_ && write_char_token_) {
+  if (write_char_ && write_char_token_.value != 0) {
     write_char_.WriteRequested(write_char_token_);
   }
+  notify_write_token_ = {};
+  subscribe_token_ = {};
+  write_char_token_ = {};
   if (provider_) {
     try {
       provider_.StopAdvertising();
