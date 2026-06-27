@@ -66,6 +66,10 @@ class EmulatorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Public wrapper so UI widgets can trigger a rebuild without calling the
+  /// protected [notifyListeners] directly.
+  void notify() => notifyListeners();
+
   void _addLog(String s) {
     log.add(s);
     if (log.length > 500) log.removeAt(0);

@@ -41,7 +41,6 @@ void main() {
   });
 
   test('0100 サポートPIDビットマップ', () {
-    final r = h.handle('0100');
     expect(h.handle('0100'), ['41 00 18 1B 80 01 ']);
   });
 
