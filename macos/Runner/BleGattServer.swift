@@ -9,6 +9,7 @@ class BleGattServer: NSObject, CBPeripheralManagerDelegate {
     private let onConn: (String, String) -> Void
     private var useFff0 = false
     private var pendingStart = false
+    private var pending: [Data] = []
 
     init(onRx: @escaping (Data) -> Void, onConn: @escaping (String, String) -> Void) {
         self.onRx = onRx
@@ -65,16 +66,31 @@ class BleGattServer: NSObject, CBPeripheralManagerDelegate {
     }
 
     func send(_ data: Data) {
-        guard let ch = notifyChar else { return }
         var i = 0
-        let chunk = 20
+        let chunkSize = 20
         while i < data.count {
-            let end = min(i + chunk, data.count)
-            let ok = manager.updateValue(data.subdata(in: i..<end), for: ch,
-                                         onSubscribedCentrals: nil)
-            if !ok { break } // バッファ不足なら次の ready を待つ（簡略化）
+            let end = min(i + chunkSize, data.count)
+            pending.append(data.subdata(in: i..<end))
             i = end
         }
+        flushPending()
+    }
+
+    private func flushPending() {
+        guard let ch = notifyChar else { return }
+        while !pending.isEmpty {
+            let chunk = pending[0]
+            let ok = manager.updateValue(chunk, for: ch, onSubscribedCentrals: nil)
+            if ok {
+                pending.removeFirst()
+            } else {
+                break // CoreBluetooth will call peripheralManagerIsReady(toUpdateSubscribers:)
+            }
+        }
+    }
+
+    func peripheralManagerIsReady(toUpdateSubscribers peripheral: CBPeripheralManager) {
+        flushPending()
     }
 
     func stop() {
@@ -82,6 +98,7 @@ class BleGattServer: NSObject, CBPeripheralManagerDelegate {
         manager.removeAllServices()
         notifyChar = nil
         central = nil
+        pending = []
     }
 
     func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
