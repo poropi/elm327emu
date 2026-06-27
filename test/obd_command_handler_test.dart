@@ -37,7 +37,7 @@ void main() {
   test('headers on で 7E8 とPCI付与', () {
     state.headers = true;
     v.rpm = 1726;
-    expect(h.handle('010C'), ['7E8 06 41 0C 1A F8 ']);
+    expect(h.handle('010C'), ['7E8 04 41 0C 1A F8 ']);
   });
 
   test('0100 サポートPIDビットマップ', () {

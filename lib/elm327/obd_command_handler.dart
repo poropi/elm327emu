@@ -25,7 +25,7 @@ class ObdCommandHandler {
       lines.addAll(isoTpMultiline(data));
     } else if (state.headers) {
       // 7E8 + PCI(データ長) + データ
-      final pci = toHex2(data.length + 2);
+      final pci = toHex2(data.length);
       lines.add('7E8 $pci ${formatBytes(data, spaces: state.spaces)}'.trimRight() +
           (state.spaces ? ' ' : ''));
     } else {
