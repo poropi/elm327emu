@@ -17,7 +17,7 @@ class ObdCommandHandler {
     }
 
     final data = _dataBytes(c);
-    if (data == null) return ['NO DATA'];
+    if (data == null) return [...searching, 'NO DATA'];
 
     final lines = <String>[];
     if (data.length > 7) {
@@ -66,7 +66,7 @@ class ObdCommandHandler {
     switch (pid) {
       case 0x00:
         // 0x01..0x20 のサポートビットマップ（実装PIDを反映）
-        return [0x41, 0x00, 0x18, 0x3B, 0x80, 0x11];
+        return [0x41, 0x00, 0x18, 0x1B, 0x80, 0x01];
       case 0x04: // エンジン負荷
         return [0x41, 0x04, _pct255(vehicle.engineLoadPct)];
       case 0x05: // 水温
@@ -83,7 +83,7 @@ class ObdCommandHandler {
       case 0x11: // スロットル
         return [0x41, 0x11, _pct255(vehicle.throttlePct)];
       case 0x20:
-        return [0x41, 0x20, 0x00, 0x00, 0x00, 0x01];
+        return [0x41, 0x20, 0x00, 0x02, 0x00, 0x01];
       case 0x2F: // 燃料レベル
         return [0x41, 0x2F, _pct255(vehicle.fuelLevelPct)];
       case 0x40:

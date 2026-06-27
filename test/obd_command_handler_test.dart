@@ -42,7 +42,7 @@ void main() {
 
   test('0100 サポートPIDビットマップ', () {
     final r = h.handle('0100');
-    expect(r.first.startsWith('41 00 '), isTrue);
+    expect(h.handle('0100'), ['41 00 18 1B 80 01 ']);
   });
 
   test('03 でDTC', () {
@@ -63,6 +63,12 @@ void main() {
 
   test('未対応PIDは NO DATA', () {
     expect(h.handle('01FF'), ['NO DATA']);
+  });
+
+  test('初期化前の未対応PIDは SEARCHING... + NO DATA', () {
+    state.initialized = false;
+    expect(h.handle('01FF'), ['SEARCHING...', 'NO DATA']);
+    expect(state.initialized, isTrue);
   });
 
   test('初期化前は SEARCHING... 先頭', () {
