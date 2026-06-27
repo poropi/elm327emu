@@ -25,6 +25,12 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
+
+  // Register the ELM327 BLE/SPP transport channels. Must run on the UI thread
+  // (this is it) so EventSink marshaling targets the right thread.
+  elm327_plugin_ = std::make_unique<Elm327Plugin>();
+  elm327_plugin_->Register(flutter_controller_->engine()->messenger());
+
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
