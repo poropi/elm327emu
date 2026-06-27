@@ -16,6 +16,10 @@ class BleGattServer(
     private var notifyChar: BluetoothGattCharacteristic? = null
     @Volatile private var device: BluetoothDevice? = null
 
+    // Back-pressure queue: chunks are sent one at a time, waiting for onNotificationSent.
+    private val pending = java.util.ArrayDeque<ByteArray>()
+    @Volatile private var sending = false
+
     fun start(useFff0: Boolean) {
         val mgr = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         val adapter = mgr.adapter
@@ -82,24 +86,55 @@ class BleGattServer(
                     gattServer?.sendResponse(d, requestId, BluetoothGatt.GATT_SUCCESS, offset, null)
                 }
             }
+
+            override fun onNotificationSent(d: BluetoothDevice, status: Int) {
+                synchronized(pending) {
+                    sending = false
+                    if (status == BluetoothGatt.GATT_SUCCESS) {
+                        flushNext()
+                    }
+                    // On failure, the chunk was already removed; leave remaining chunks for next send().
+                }
+            }
         })
         gattServer?.addService(service)
     }
 
-    /** 応答を MTU(20) ごとに分割 Notify する。 */
+    /** 応答を MTU(20) ごとに分割 Notify する。チャンクは onNotificationSent で直列化する。 */
     fun send(bytes: ByteArray) {
+        if (notifyChar == null || device == null) return
+        synchronized(pending) {
+            var i = 0
+            while (i < bytes.size) {
+                val end = minOf(i + 20, bytes.size)
+                pending.addLast(bytes.copyOfRange(i, end))
+                i = end
+            }
+            flushNext()
+        }
+    }
+
+    /** pending キューから次のチャンクを送信する。synchronized(pending) ブロック内から呼ぶこと。 */
+    private fun flushNext() {
+        if (sending) return
         val ch = notifyChar ?: return
         val d = device ?: return
-        var i = 0
-        while (i < bytes.size) {
-            val end = minOf(i + 20, bytes.size)
-            ch.value = bytes.copyOfRange(i, end)
-            gattServer?.notifyCharacteristicChanged(d, ch, false)
-            i = end
+        val chunk = pending.pollFirst() ?: return
+        ch.value = chunk
+        val ok = gattServer?.notifyCharacteristicChanged(d, ch, false) ?: false
+        if (ok) {
+            sending = true
+        } else {
+            // notifyCharacteristicChanged が失敗した場合はキューの先頭に戻す。
+            pending.addFirst(chunk)
         }
     }
 
     fun stop() {
+        synchronized(pending) {
+            pending.clear()
+            sending = false
+        }
         advertiser?.stopAdvertising(object : AdvertiseCallback() {})
         gattServer?.close()
         gattServer = null

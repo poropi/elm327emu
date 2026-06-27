@@ -17,6 +17,7 @@ class Elm327Plugin: NSObject, FlutterStreamHandler {
             case "startBle":
                 let args = call.arguments as? [String: Any]
                 let fff0 = (args?["profile"] as? String) == "fff0"
+                self.ble?.stop()
                 self.ble = BleGattServer(
                     onRx: { data in self.emitRx(Array(data)) },
                     onConn: { s, d in self.emitConn(s, d) })

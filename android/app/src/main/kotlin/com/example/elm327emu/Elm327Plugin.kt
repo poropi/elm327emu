@@ -18,11 +18,13 @@ class Elm327Plugin(private val context: Context) {
                 "capabilities" -> result.success(listOf("ble", "spp"))
                 "startBle" -> {
                     val fff0 = call.argument<String>("profile") == "fff0"
+                    ble?.stop()
                     ble = BleGattServer(context, rx("ble"), conn("ble")).also { it.start(fff0) }
                     result.success(null)
                 }
                 "stopBle" -> { ble?.stop(); ble = null; result.success(null) }
                 "startSpp" -> {
+                    spp?.stop()
                     spp = SppServer(rx("spp"), conn("spp")).also { it.start() }
                     result.success(null)
                 }
