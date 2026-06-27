@@ -25,14 +25,14 @@ class AtCommandHandler {
     if (body.startsWith('E')) return _setBool(body, (v) => state.echo = v);
     if (body.startsWith('L')) return _setBool(body, (v) => state.linefeed = v);
     if (body.startsWith('H')) return _setBool(body, (v) => state.headers = v);
-    if (body.startsWith('S') && body.length == 2) {
-      return _setBool(body, (v) => state.spaces = v);
-    }
     if (body.startsWith('SP')) {
       final p = body.substring(2).replaceFirst('A', '');
       final n = int.tryParse(p, radix: 16);
       if (n != null) state.protocol = n == 0 ? 6 : n;
       return 'OK';
+    }
+    if (body.startsWith('S') && body.length == 2) {
+      return _setBool(body, (v) => state.spaces = v);
     }
     // 受理するが状態を持たない系（タイミング等）は OK
     if (body.startsWith('ST') ||

@@ -48,4 +48,24 @@ void main() {
   test('未知ATは ?', () {
     expect(h.handle('ATXYZ'), '?');
   });
+
+  test('ATSP (bare) returns OK and does not return ?', () {
+    expect(h.handle('ATSP'), 'OK');
+  });
+
+  test('ATSP0 returns OK and sets protocol to 6', () {
+    expect(h.handle('ATSP0'), 'OK');
+    expect(state.protocol, 6);
+  });
+
+  test('ATSPA6 returns OK and sets protocol to 6', () {
+    expect(h.handle('ATSPA6'), 'OK');
+    expect(state.protocol, 6);
+  });
+
+  test('ATS0 still toggles spaces OFF (regression guard)', () {
+    state.spaces = true;
+    expect(h.handle('ATS0'), 'OK');
+    expect(state.spaces, isFalse);
+  });
 }
