@@ -19,7 +19,7 @@ void main() {
 
   test('OBD 応答にプロンプト', () {
     e.process('ATE0');
-    e.state.initialized = true;
+    e.state.established = 6;
     e.vehicle.rpm = 1726;
     final r = e.process('010C');
     expect(r, '41 0C 1A F8 \r\r>');

@@ -8,7 +8,7 @@ void main() {
   late VehicleState v;
   late ObdCommandHandler h;
   setUp(() {
-    state = ElmState()..initialized = true;
+    state = ElmState()..established = 6;
     v = VehicleState.defaults();
     h = ObdCommandHandler(state, v);
   });
@@ -65,16 +65,16 @@ void main() {
   });
 
   test('初期化前の未対応PIDは SEARCHING... + NO DATA', () {
-    state.initialized = false;
+    state.established = null;
     expect(h.handle('01FF'), ['SEARCHING...', 'NO DATA']);
-    expect(state.initialized, isTrue);
+    expect(state.established, isNotNull);
   });
 
   test('初期化前は SEARCHING... 先頭', () {
-    state.initialized = false;
+    state.established = null;
     v.rpm = 800;
     final r = h.handle('010C');
     expect(r.first, 'SEARCHING...');
-    expect(state.initialized, isTrue); // 以後は確立
+    expect(state.established, isNotNull); // 以後は確立
   });
 }

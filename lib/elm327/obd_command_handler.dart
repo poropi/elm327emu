@@ -11,8 +11,8 @@ class ObdCommandHandler {
   List<String> handle(String cmd) {
     final c = cmd.toUpperCase().replaceAll(' ', '');
     final searching = <String>[];
-    if (!state.initialized) {
-      state.initialized = true;
+    if (state.established == null) {
+      state.established = state.activeProtocol;
       searching.add('SEARCHING...');
     }
 

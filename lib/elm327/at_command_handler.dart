@@ -19,7 +19,7 @@ class AtCommandHandler {
     if (body == 'I') return _id;
     if (body == '@1' || body == '@2') return 'ELM327 OBD EMULATOR';
     if (body == 'RV') return '12.4V';
-    if (body == 'DPN') return state.protocol.toRadixString(16).toUpperCase();
+    if (body == 'DPN') return state.describeProtocolNumber();
     if (body == 'DP') return 'ISO 15765-4 (CAN 11/500)';
 
     if (body.startsWith('E')) return _setBool(body, (v) => state.echo = v);
@@ -28,7 +28,7 @@ class AtCommandHandler {
     if (body.startsWith('SP')) {
       final p = body.substring(2).replaceFirst('A', '');
       final n = int.tryParse(p, radix: 16);
-      if (n != null) state.protocol = n == 0 ? 6 : n;
+      if (n != null) state.setProtocol(n, auto: n == 0, save: true);
       return 'OK';
     }
     if (body.startsWith('S') && body.length == 2) {

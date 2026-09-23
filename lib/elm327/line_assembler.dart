@@ -1,5 +1,5 @@
-/// 受信バイト列を `\r` 区切りでコマンド行に組み立てる。
-/// Transport ごとに 1 インスタンスを使う（バッファを分離するため）。
+/// 受信バイト列を CR 区切りのコマンド行に組み立てる。
+/// 空行は '' として返す（直前のコマンドの繰り返しに使う）。LF・NUL などの制御文字は捨てる。
 class LineAssembler {
   final StringBuffer _buf = StringBuffer();
 
@@ -7,12 +7,9 @@ class LineAssembler {
     final lines = <String>[];
     for (final byte in bytes) {
       if (byte == 0x0D) {
-        final line = _buf.toString().trim();
+        lines.add(_buf.toString());
         _buf.clear();
-        if (line.isNotEmpty) lines.add(line);
-      } else if (byte == 0x0A) {
-        // LF は無視
-      } else {
+      } else if (byte >= 0x20) {
         _buf.writeCharCode(byte);
       }
     }

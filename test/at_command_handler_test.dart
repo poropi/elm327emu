@@ -33,7 +33,7 @@ void main() {
   });
 
   test('ATDPN はプロトコル番号', () {
-    expect(h.handle('ATDPN'), '6');
+    expect(h.handle('ATDPN'), 'A0');
   });
 
   test('ATI は識別子, ATRV は電圧', () {
@@ -55,7 +55,7 @@ void main() {
 
   test('ATSP0 returns OK and sets protocol to 6', () {
     expect(h.handle('ATSP0'), 'OK');
-    expect(state.protocol, 6);
+    expect(state.protocol, 0);
   });
 
   test('ATSPA6 returns OK and sets protocol to 6', () {
