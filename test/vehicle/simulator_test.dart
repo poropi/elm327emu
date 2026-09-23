@@ -37,6 +37,8 @@ void main() {
     expect(v.mapKpa, inInclusiveRange(20, 101));
     expect(v.timingDeg, inInclusiveRange(-10, 40));
     expect(v.fuelRateLph, greaterThanOrEqualTo(0));
+    expect(v.catalystTempC, inInclusiveRange(0, 1000));
+    expect(v.oilTempC, inInclusiveRange(-40, 210));
   });
 
   test('積算: 36 km/h で 100 秒 → 1 km、経過時間 100 秒（disabled でも進む）', () {
@@ -79,6 +81,16 @@ void main() {
     v.coolantTempC = 80;
     s.tick(0.2);
     expect(v.warmupsSinceClear, 1);
+  });
+
+  test('触媒温度・油温は極端な初期値でも pid_table の符号化範囲内に収まる', () {
+    final v = VehicleState.defaults()
+      ..catalystTempC = 5000
+      ..oilTempC = 9000;
+    final s = Simulator(v)..enabled = true;
+    s.tick(0.2);
+    expect(v.catalystTempC, inInclusiveRange(0, 1000));
+    expect(v.oilTempC, inInclusiveRange(-40, 210));
   });
 
   test('派生値: 動的モード中は MAF から燃料消費率を計算', () {

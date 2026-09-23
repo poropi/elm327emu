@@ -198,11 +198,14 @@ class EmulatorController extends ChangeNotifier {
         await bridge.disconnect(t);
       }
     } on MissingPluginException catch (e) {
-      _log(LogKind.info, '${t.label} の切断に失敗: $e');
+      _logDisconnectFailure(t, e);
     } on PlatformException catch (e) {
-      _log(LogKind.info, '${t.label} の切断に失敗: $e');
+      _logDisconnectFailure(t, e);
     }
   }
+
+  void _logDisconnectFailure(TransportType t, Object e) =>
+      _log(LogKind.info, '${t.label} の切断に失敗: $e');
 
   Future<void> disconnectAll() async {
     for (final t in connectedTransports) {

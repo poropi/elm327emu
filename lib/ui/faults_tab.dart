@@ -56,7 +56,9 @@ class FaultsTab extends StatelessWidget {
             title: Text('${p.label} ${hexN(p.responseId11, 3)}'),
             subtitle: p.enabled ? null : const Text('ECU が無効のため対象外', style: captionStyle),
             value: f.silentEcus.contains(p.name),
-            onChanged: (v) => c.updateFaults((x) => v ? x.silentEcus.add(p.name) : x.silentEcus.remove(p.name)),
+            onChanged: p.enabled
+                ? (v) => c.updateFaults((x) => v ? x.silentEcus.add(p.name) : x.silentEcus.remove(p.name))
+                : null,
           ),
       ]),
       SectionCard(title: 'タイミングと欠落', children: [

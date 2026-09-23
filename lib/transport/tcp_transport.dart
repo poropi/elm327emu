@@ -24,7 +24,7 @@ class TcpTransport {
     if (_server != null) return;
     final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, _requestedPort);
     _server = server;
-    server.listen(_accept);
+    server.listen(_accept, onError: (Object e) => _conn.add('error $e'));
   }
 
   void _accept(Socket s) {
@@ -65,6 +65,10 @@ class TcpTransport {
     if (c != null) _drop(c);
   }
 
+  /// [_rx] / [_conn] はここでは close しない: このインスタンスは start()/stop() を
+  /// 何度も繰り返される（UI の TCP タブの起動・停止、EmulatorController は 1 個を使い回す）ので、
+  /// stop() の時点で閉じると次の start() 後に「Cannot add event after closing」で落ちる。
+  /// アプリ終了などでインスタンスごと破棄するときは GC に任せる。
   Future<void> stop() async {
     await disconnect();
     await _server?.close();

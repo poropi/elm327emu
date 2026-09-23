@@ -16,7 +16,16 @@ Future<void> main(List<String> argv) async {
     ..addFlag('transmission', negatable: false, help: 'トランスミッション ECU を有効にする')
     ..addFlag('dynamic', negatable: false, help: '動的シミュレーションを有効にする')
     ..addFlag('quiet', negatable: false, help: '送受信を表示しない');
-  final args = parser.parse(argv);
+  final ArgResults args;
+  final int port;
+  try {
+    args = parser.parse(argv);
+    port = int.parse(args['port'] as String);
+  } on FormatException catch (e) {
+    stderr.writeln('エラー: ${e.message}');
+    stderr.writeln(parser.usage);
+    exit(2);
+  }
   final quiet = args['quiet'] as bool;
 
   final core = EmulationCore()..start();
@@ -24,7 +33,7 @@ Future<void> main(List<String> argv) async {
   core.simulator.enabled = args['dynamic'] as bool;
   Timer.periodic(const Duration(milliseconds: 200), (_) => core.simulator.tick(0.2));
 
-  final tcp = TcpTransport(port: int.parse(args['port'] as String));
+  final tcp = TcpTransport(port: port);
   ElmSession? session;
   String esc(List<int> b) => String.fromCharCodes(b).replaceAll('\r', r'\r').replaceAll('\n', r'\n');
 

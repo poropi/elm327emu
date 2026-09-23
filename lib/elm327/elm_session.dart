@@ -101,14 +101,7 @@ class ElmSession {
     _emit('${lines.map((l) => '$l$_eol').join()}$_eol>');
   }
 
-  void _stop() {
-    _timer?.cancel();
-    _timer = null;
-    _pending = null;
-    _monitor = null;
-    _mode = SessionMode.idle;
-    _emit('STOPPED$_eol$_eol>');
-  }
+  void _stop() => _finish(const ['STOPPED']);
 
   void _processLine(String raw) {
     if (state.echo) _emit('$raw\r');

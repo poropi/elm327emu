@@ -100,8 +100,9 @@ class Simulator {
     v.mapKpa = (25 + v.throttlePct * 0.7).clamp(20, 101);
     v.timingDeg = (10 + (v.rpm - 800) / 6200 * 25).clamp(-10, 40);
     v.fuelRateLph = v.maf / 14.7 / 745 * 3600; // 空燃比 14.7、ガソリン 745 g/L
-    v.catalystTempC += (400 + v.engineLoadPct * 3 - v.catalystTempC) * 0.02;
-    v.oilTempC += (v.coolantTempC + 5 - v.oilTempC) * 0.01;
+    v.catalystTempC =
+        (v.catalystTempC + (400 + v.engineLoadPct * 3 - v.catalystTempC) * 0.02).clamp(0, 1000);
+    v.oilTempC = (v.oilTempC + (v.coolantTempC + 5 - v.oilTempC) * 0.01).clamp(-40, 210);
     v.acceleratorPct = v.throttlePct * 0.8;
     v.absLoadPct = v.engineLoadPct * 0.9;
   }

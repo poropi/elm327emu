@@ -108,5 +108,16 @@ void main() {
     await tester.tap(find.byKey(const Key('fault-error-stop')));
     await tester.pump();
     expect(c.core.faultConfig.errorArmed, isFalse);
+
+    // トランスミッションは既定で無効な ECU → 無応答スイッチは操作できない。
+    await reveal(tester, find.byKey(const Key('fault-silent-transmission')), FaultsTab);
+    var silentSwitch = tester.widget<SwitchListTile>(find.byKey(const Key('fault-silent-transmission')));
+    expect(silentSwitch.onChanged, isNull);
+    expect(c.core.transmission.enabled, isFalse);
+
+    c.setEcuEnabled(c.core.transmission, true);
+    await tester.pump();
+    silentSwitch = tester.widget<SwitchListTile>(find.byKey(const Key('fault-silent-transmission')));
+    expect(silentSwitch.onChanged, isNotNull);
   });
 }
