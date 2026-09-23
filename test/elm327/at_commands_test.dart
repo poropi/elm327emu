@@ -46,7 +46,9 @@ void main() {
     test('@2 は未保存なら ?、@3 は 12 文字ちょうどを 1 回だけ保存（p.26）', () {
       q('@2');
       expect(reply('@3SHORT', raw: 'AT@3 SHORT'), ['?']);
-      expect(reply('@3ABCDEFGHIJKLM', raw: 'AT@3 ABCDEFGHIJKLM'), ['?']); // 13 文字
+      expect(reply('@3ABCDEFGHIJKLM', raw: 'AT@3 ABCDEFGHIJKLM'), [
+        '?',
+      ]); // 13 文字
       // スペースと小文字はそのまま保存する（'SN-001 2026x' は 12 文字）
       expect(reply('@3SN-0012026X', raw: 'AT@3 SN-001 2026x'), ['OK']);
       expect(reply('@2'), ['SN-001 2026x']);
@@ -301,14 +303,41 @@ void main() {
   group('CAN 以外', () {
     test('設定系は OK', () {
       for (final c in [
-        'IFR0', 'IFR1', 'IFR2', 'IFRH', 'IFRS', 'IB10', 'IB48', 'IB96', 'IIA13', //
-        'KW0', 'KW1', 'SW92', 'SW00', 'WM8110F13E', 'JE', 'JS', 'JHF0', 'JHF1', 'JTM1', 'JTM5',
+        'IFR0',
+        'IFR1',
+        'IFR2',
+        'IFRH',
+        'IFRS',
+        'IB10',
+        'IB48',
+        'IB96',
+        'IIA13', //
+        'KW0',
+        'KW1',
+        'SW92',
+        'SW00',
+        'WM8110F13E',
+        'JE',
+        'JS',
+        'JHF0',
+        'JHF1',
+        'JTM1',
+        'JTM5',
       ]) {
         ok(c);
       }
     });
     test('実行系は ?（p.78）', () {
-      for (final c in ['FI', 'SI', 'KW', 'DM1', 'MPFECA', 'MPFECA5', 'MP00FECA', 'MP00FECA3']) {
+      for (final c in [
+        'FI',
+        'SI',
+        'KW',
+        'DM1',
+        'MPFECA',
+        'MPFECA5',
+        'MP00FECA',
+        'MP00FECA3',
+      ]) {
         q(c);
       }
     });

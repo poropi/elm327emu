@@ -1,7 +1,7 @@
 /// CAN フレーム 1 つ。11bit ID（0〜0x7FF）または 29bit ID（0〜0x1FFFFFFF）と、データ 0〜8 バイト。
 class CanFrame {
   CanFrame(this.id, List<int> data, {this.extended = false, this.rtr = false})
-      : data = List.unmodifiable(data) {
+    : data = List.unmodifiable(data) {
     if (data.length > 8) {
       throw ArgumentError.value(data.length, 'data', 'CAN のデータは 8 バイトまで');
     }
@@ -31,8 +31,10 @@ class CanFrame {
 
   @override
   String toString() {
-    final idText =
-        id.toRadixString(16).toUpperCase().padLeft(extended ? 8 : 3, '0');
+    final idText = id
+        .toRadixString(16)
+        .toUpperCase()
+        .padLeft(extended ? 8 : 3, '0');
     final bytes = data
         .map((b) => b.toRadixString(16).toUpperCase().padLeft(2, '0'))
         .join(' ');

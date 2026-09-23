@@ -51,7 +51,14 @@ void main() {
     expect(await applyControl(core, 'transmission on'), 'ok');
     expect(core.transmission.enabled, isTrue);
     var disconnected = false;
-    expect(await applyControl(core, 'disconnect', disconnect: () async => disconnected = true), 'ok');
+    expect(
+      await applyControl(
+        core,
+        'disconnect',
+        disconnect: () async => disconnected = true,
+      ),
+      'ok',
+    );
     expect(disconnected, isTrue);
   });
 

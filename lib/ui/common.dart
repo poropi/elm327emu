@@ -23,7 +23,12 @@ const captionStyle = TextStyle(fontSize: 12, color: AppColors.caption);
 
 /// 角丸・枠線・見出し付きのカード。
 class SectionCard extends StatelessWidget {
-  const SectionCard({super.key, required this.title, required this.children, this.trailing});
+  const SectionCard({
+    super.key,
+    required this.title,
+    required this.children,
+    this.trailing,
+  });
 
   final String title;
   final List<Widget> children;
@@ -41,16 +46,27 @@ class SectionCard extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Row(children: [
-            Expanded(
-              child: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                ?trailing,
+              ],
             ),
-            ?trailing,
-          ]),
-          const SizedBox(height: 12),
-          ...children,
-        ]),
+            const SizedBox(height: 12),
+            ...children,
+          ],
+        ),
       ),
     );
   }
@@ -58,7 +74,12 @@ class SectionCard extends StatelessWidget {
 
 /// 画面上部の注意帯（MIL・有効な障害など）。
 class NoticeBanner extends StatelessWidget {
-  const NoticeBanner({super.key, required this.title, this.lines = const [], this.warn = true});
+  const NoticeBanner({
+    super.key,
+    required this.title,
+    this.lines = const [],
+    this.warn = true,
+  });
 
   final String title;
   final List<String> lines;
@@ -73,17 +94,33 @@ class NoticeBanner extends StatelessWidget {
         color: warn ? AppColors.warnBg : AppColors.neutralBg,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: fg)),
-        for (final l in lines) Text(l, style: TextStyle(fontSize: 13, color: fg)),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: fg,
+            ),
+          ),
+          for (final l in lines)
+            Text(l, style: TextStyle(fontSize: 13, color: fg)),
+        ],
+      ),
     );
   }
 }
 
 /// ECU の切り替え（DTC タブと ECU タブで共通）。
 class EcuSelector extends StatelessWidget {
-  const EcuSelector({super.key, required this.ecus, required this.selected, required this.onChanged});
+  const EcuSelector({
+    super.key,
+    required this.ecus,
+    required this.selected,
+    required this.onChanged,
+  });
 
   final List<EcuProfile> ecus;
   final String selected;
@@ -96,7 +133,11 @@ class EcuSelector extends StatelessWidget {
         for (final e in ecus)
           ButtonSegment(
             value: e.name,
-            label: Text(e.enabled ? '${e.label} ${hexN(e.responseId11, 3)}' : '${e.label}（無効）'),
+            label: Text(
+              e.enabled
+                  ? '${e.label} ${hexN(e.responseId11, 3)}'
+                  : '${e.label}（無効）',
+            ),
           ),
       ],
       selected: {selected},

@@ -21,9 +21,24 @@ class PeriodicTraffic {
   void start() {
     stop();
     _timers
-      ..add(Timer.periodic(const Duration(milliseconds: 20), (_) => _send(0x0C9, _engine)))
-      ..add(Timer.periodic(const Duration(milliseconds: 100), (_) => _send(0x3E9, _speed)))
-      ..add(Timer.periodic(const Duration(milliseconds: 1000), (_) => _send(0x4C1, _temps)));
+      ..add(
+        Timer.periodic(
+          const Duration(milliseconds: 20),
+          (_) => _send(0x0C9, _engine),
+        ),
+      )
+      ..add(
+        Timer.periodic(
+          const Duration(milliseconds: 100),
+          (_) => _send(0x3E9, _speed),
+        ),
+      )
+      ..add(
+        Timer.periodic(
+          const Duration(milliseconds: 1000),
+          (_) => _send(0x4C1, _temps),
+        ),
+      );
   }
 
   void stop() {
@@ -48,6 +63,14 @@ class PeriodicTraffic {
     return [s >> 8, s & 0xFF, 0, 0, 0, 0, 0, 0];
   }
 
-  List<int> _temps() =>
-      [temp40(vehicle.coolantTempC), temp40(vehicle.oilTempC), 0, 0, 0, 0, 0, 0];
+  List<int> _temps() => [
+    temp40(vehicle.coolantTempC),
+    temp40(vehicle.oilTempC),
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+  ];
 }

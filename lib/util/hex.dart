@@ -1,5 +1,6 @@
 /// 16 進の表示と解析。
-String hex2(int v) => (v & 0xFF).toRadixString(16).toUpperCase().padLeft(2, '0');
+String hex2(int v) =>
+    (v & 0xFF).toRadixString(16).toUpperCase().padLeft(2, '0');
 
 String hexN(int v, int width) =>
     v.toRadixString(16).toUpperCase().padLeft(width, '0');

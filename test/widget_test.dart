@@ -8,7 +8,8 @@ void main() {
   testWidgets('HomePage renders', (tester) async {
     await tester.pumpWidget(
       ChangeNotifierProvider(
-        create: (_) => EmulatorController(),  // do NOT call init() in test (no platform channels)
+        create: (_) =>
+            EmulatorController(), // do NOT call init() in test (no platform channels)
         child: const MaterialApp(home: HomePage()),
       ),
     );

@@ -5,7 +5,8 @@ enum _Phase { idle, accel, cruise, decel }
 /// 車両状態を時間で動かす。tick(dt) を外部から駆動する。
 /// 積算（距離・時間・レディネス）は常に、走行パターンと派生値は enabled のときだけ進める。
 class Simulator {
-  Simulator(this.vehicle, {bool Function()? milOn}) : _milOn = milOn ?? (() => false);
+  Simulator(this.vehicle, {bool Function()? milOn})
+    : _milOn = milOn ?? (() => false);
 
   final VehicleState vehicle;
   final bool Function() _milOn;
@@ -77,13 +78,17 @@ class Simulator {
   }
 
   _Phase _next(_Phase p) => switch (p) {
-        _Phase.idle => _Phase.accel,
-        _Phase.accel => _Phase.cruise,
-        _Phase.cruise => _Phase.decel,
-        _Phase.decel => _Phase.idle,
-      };
+    _Phase.idle => _Phase.accel,
+    _Phase.accel => _Phase.cruise,
+    _Phase.cruise => _Phase.decel,
+    _Phase.decel => _Phase.idle,
+  };
 
-  void _approach({required double targetSpeed, required int targetRpm, required double dt}) {
+  void _approach({
+    required double targetSpeed,
+    required int targetRpm,
+    required double dt,
+  }) {
     final k = (dt * 0.6).clamp(0.0, 1.0);
     vehicle.speedKmh += (targetSpeed - vehicle.speedKmh) * k;
     vehicle.rpm += ((targetRpm - vehicle.rpm) * k).round();
@@ -96,13 +101,20 @@ class Simulator {
     v.throttlePct = ((v.rpm - 800) / 6200 * 100).clamp(0, 100);
     v.engineLoadPct = (v.throttlePct * 0.8 + 15).clamp(0, 100);
     v.maf = (v.rpm / 800 * 3.5).clamp(0, 200);
-    v.coolantTempC = (v.coolantTempC + (90 - v.coolantTempC) * 0.01).clamp(20, 110);
+    v.coolantTempC = (v.coolantTempC + (90 - v.coolantTempC) * 0.01).clamp(
+      20,
+      110,
+    );
     v.mapKpa = (25 + v.throttlePct * 0.7).clamp(20, 101);
     v.timingDeg = (10 + (v.rpm - 800) / 6200 * 25).clamp(-10, 40);
     v.fuelRateLph = v.maf / 14.7 / 745 * 3600; // 空燃比 14.7、ガソリン 745 g/L
     v.catalystTempC =
-        (v.catalystTempC + (400 + v.engineLoadPct * 3 - v.catalystTempC) * 0.02).clamp(0, 1000);
-    v.oilTempC = (v.oilTempC + (v.coolantTempC + 5 - v.oilTempC) * 0.01).clamp(-40, 210);
+        (v.catalystTempC + (400 + v.engineLoadPct * 3 - v.catalystTempC) * 0.02)
+            .clamp(0, 1000);
+    v.oilTempC = (v.oilTempC + (v.coolantTempC + 5 - v.oilTempC) * 0.01).clamp(
+      -40,
+      210,
+    );
     v.acceleratorPct = v.throttlePct * 0.8;
     v.absLoadPct = v.engineLoadPct * 0.9;
   }

@@ -4,7 +4,8 @@ import 'dart:io';
 import 'package:test/test.dart';
 import 'package:elm327emu/transport/tcp_transport.dart';
 
-Future<void> _settle() => Future<void>.delayed(const Duration(milliseconds: 50));
+Future<void> _settle() =>
+    Future<void>.delayed(const Duration(milliseconds: 50));
 
 void main() {
   test('1 接続を受けて送受信し、2 本目は切り、disconnect で切れる', () async {
@@ -35,7 +36,11 @@ void main() {
 
     final c2 = await Socket.connect(InternetAddress.loopbackIPv4, t.port);
     final c2Done = Completer<void>();
-    c2.listen((_) {}, onDone: c2Done.complete, onError: (Object _) => c2Done.complete());
+    c2.listen(
+      (_) {},
+      onDone: c2Done.complete,
+      onError: (Object _) => c2Done.complete(),
+    );
     await c2Done.future.timeout(const Duration(seconds: 2));
 
     await t.disconnect();

@@ -38,8 +38,10 @@ void main() {
   });
 
   test('frameType', () {
-    expect(frameType([0x04, 0x41, 0x0C, 0x0C, 0x80, 0, 0, 0]),
-        FrameType.single);
+    expect(
+      frameType([0x04, 0x41, 0x0C, 0x0C, 0x80, 0, 0, 0]),
+      FrameType.single,
+    );
     expect(frameType([0x00, 0, 0]), FrameType.invalid);
     expect(frameType([0x08, 0, 0, 0, 0, 0, 0, 0]), FrameType.invalid);
     expect(frameType([0x03, 0x41]), FrameType.invalid); // 長さが足りない
@@ -57,8 +59,12 @@ void main() {
 
   group('Reassembler', () {
     test('SF はパディングを除いて返す', () {
-      expect(Reassembler().add([0x04, 0x41, 0x0C, 0x0C, 0x80, 0, 0, 0]),
-          [0x41, 0x0C, 0x0C, 0x80]);
+      expect(Reassembler().add([0x04, 0x41, 0x0C, 0x0C, 0x80, 0, 0, 0]), [
+        0x41,
+        0x0C,
+        0x0C,
+        0x80,
+      ]);
     });
 
     test('FF と CF から復元する', () {

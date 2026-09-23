@@ -19,7 +19,10 @@ void main() {
       s.output.listen((b) => out.write(String.fromCharCodes(b)));
       s.input('ATE0\r0100\r'.codeUnits);
       async.elapse(const Duration(milliseconds: 100));
-      expect(out.toString(), 'ATE0\rOK\r\r>SEARCHING...\r41 00 BE 3F A0 13 \r\r>');
+      expect(
+        out.toString(),
+        'ATE0\rOK\r\r>SEARCHING...\r41 00 BE 3F A0 13 \r\r>',
+      );
       final ids = <int>{};
       core.bus.listen((e) => ids.add(e.frame.id));
       async.elapse(const Duration(milliseconds: 1000));

@@ -33,10 +33,13 @@ enum DtcKind { confirmed, pending, permanent }
 
 /// Flutter 側の結線。接続ごとに ElmSession を持ち、UI からの操作を中核へ渡す。
 class EmulatorController extends ChangeNotifier {
-  EmulatorController({TransportBridge? bridge, EmulationCore? core, bool? tcpAvailable})
-      : bridge = bridge ?? TransportBridge(),
-        core = core ?? EmulationCore(),
-        _tcpAvailable = tcpAvailable ?? (!kIsWeb && Platform.isMacOS);
+  EmulatorController({
+    TransportBridge? bridge,
+    EmulationCore? core,
+    bool? tcpAvailable,
+  }) : bridge = bridge ?? TransportBridge(),
+       core = core ?? EmulationCore(),
+       _tcpAvailable = tcpAvailable ?? (!kIsWeb && Platform.isMacOS);
 
   final EmulationCore core;
   final TransportBridge bridge;
@@ -63,9 +66,9 @@ class EmulatorController extends ChangeNotifier {
   ElmState get displayState => sessions[_lastActive]?.state ?? _idleState;
 
   List<TransportType> get connectedTransports => [
-        for (final e in connState.entries)
-          if (e.value.startsWith('接続中')) e.key,
-      ];
+    for (final e in connState.entries)
+      if (e.value.startsWith('接続中')) e.key,
+  ];
 
   String get headlineStatus {
     final c = connectedTransports;
@@ -76,15 +79,28 @@ class EmulatorController extends ChangeNotifier {
 
   Future<void> init() async {
     core.start();
-    caps = [...await bridge.capabilities(), if (_tcpAvailable) TransportType.tcp];
+    caps = [
+      ...await bridge.capabilities(),
+      if (_tcpAvailable) TransportType.tcp,
+    ];
     _subs
       ..add(bridge.onReceive.listen((e) => _receive(e.transport, e.bytes)))
-      ..add(bridge.onConnection.listen((e) => _onConnection(e.transport, e.state, e.device)))
+      ..add(
+        bridge.onConnection.listen(
+          (e) => _onConnection(e.transport, e.state, e.device),
+        ),
+      )
       ..add(tcp.onReceive.listen((b) => _receive(TransportType.tcp, b)))
-      ..add(tcp.onConnection.listen((s) {
-        final parts = s.split(' ');
-        _onConnection(TransportType.tcp, parts.first, parts.length > 1 ? parts[1] : '');
-      }));
+      ..add(
+        tcp.onConnection.listen((s) {
+          final parts = s.split(' ');
+          _onConnection(
+            TransportType.tcp,
+            parts.first,
+            parts.length > 1 ? parts[1] : '',
+          );
+        }),
+      );
     _unlistenBus = core.bus.listen(_onBus);
     _tick = Timer.periodic(const Duration(milliseconds: 200), (_) {
       core.simulator.tick(0.2);
@@ -94,17 +110,17 @@ class EmulatorController extends ChangeNotifier {
   }
 
   ElmSession _sessionFor(TransportType t) => sessions.putIfAbsent(t, () {
-        final s = core.newSession();
-        s.output.listen((bytes) {
-          _log(LogKind.output, _escape(bytes));
-          if (t == TransportType.tcp) {
-            tcp.send(bytes);
-          } else {
-            bridge.send(t, bytes);
-          }
-        });
-        return s;
-      });
+    final s = core.newSession();
+    s.output.listen((bytes) {
+      _log(LogKind.output, _escape(bytes));
+      if (t == TransportType.tcp) {
+        tcp.send(bytes);
+      } else {
+        bridge.send(t, bytes);
+      }
+    });
+    return s;
+  });
 
   void _receive(TransportType t, List<int> bytes) {
     _lastActive = t;
@@ -127,7 +143,9 @@ class EmulatorController extends ChangeNotifier {
   }
 
   bool _isDiagnostic(int id, bool extended) =>
-      extended || (id >= 0x7DF && id <= 0x7EF) || !PeriodicTraffic.ids.contains(id);
+      extended ||
+      (id >= 0x7DF && id <= 0x7EF) ||
+      !PeriodicTraffic.ids.contains(id);
 
   void _onBus(BusEvent e) {
     final f = e.frame;
@@ -135,8 +153,9 @@ class EmulatorController extends ChangeNotifier {
     _log(LogKind.can, '${e.sender is Ecu ? 'RX' : 'TX'} $f');
   }
 
-  static String _escape(List<int> bytes) =>
-      String.fromCharCodes(bytes).replaceAll('\r', r'\r').replaceAll('\n', r'\n');
+  static String _escape(List<int> bytes) => String.fromCharCodes(
+    bytes,
+  ).replaceAll('\r', r'\r').replaceAll('\n', r'\n');
 
   void _log(LogKind kind, String text) {
     log.add(LogEntry(DateTime.now(), kind, text));
@@ -229,7 +248,10 @@ class EmulatorController extends ChangeNotifier {
   void updateFaults(void Function(FaultConfig f) change) {
     change(core.faultConfig);
     final active = activeFaultDescriptions();
-    _log(LogKind.fault, active.isEmpty ? '障害: なし' : '障害: ${active.join(' / ')}');
+    _log(
+      LogKind.fault,
+      active.isEmpty ? '障害: なし' : '障害: ${active.join(' / ')}',
+    );
   }
 
   List<String> activeFaultDescriptions() {
@@ -250,10 +272,10 @@ class EmulatorController extends ChangeNotifier {
 
   // ---- DTC ----
   List<String> _list(EcuProfile e, DtcKind kind) => switch (kind) {
-        DtcKind.confirmed => e.confirmedDtcs,
-        DtcKind.pending => e.pendingDtcs,
-        DtcKind.permanent => e.permanentDtcs,
-      };
+    DtcKind.confirmed => e.confirmedDtcs,
+    DtcKind.pending => e.pendingDtcs,
+    DtcKind.permanent => e.permanentDtcs,
+  };
 
   /// 前後の空白を除き大文字にして追加する。形式違いは false。
   bool addDtc(EcuProfile e, DtcKind kind, String code) {
@@ -287,8 +309,13 @@ class EmulatorController extends ChangeNotifier {
   static final _printable = RegExp(r'^[\x20-\x7E]*$');
 
   /// Mode 09 の情報を更新する。問題があればエラー文を返す（何も変えない）。
-  String? updateEcuInfo(EcuProfile e,
-      {required String vin, required String calid, required String cvnHex, required String name}) {
+  String? updateEcuInfo(
+    EcuProfile e, {
+    required String vin,
+    required String calid,
+    required String cvnHex,
+    required String name,
+  }) {
     if (vin.isNotEmpty && (vin.length != 17 || !_printable.hasMatch(vin))) {
       return 'VIN は 17 文字（空にすると Mode 09 02 に応答しない）';
     }

@@ -22,8 +22,16 @@ void main() {
       expect(obd.handle([0x01, 0x0C], engine), [0x41, 0x0C, 0x0C, 0x80]);
     });
     test('複数 PID は対応分だけ順に並べる', () {
-      expect(obd.handle([0x01, 0x0C, 0x0D, 0x05], engine),
-          [0x41, 0x0C, 0x0C, 0x80, 0x0D, 0x00, 0x05, 0x7D]);
+      expect(obd.handle([0x01, 0x0C, 0x0D, 0x05], engine), [
+        0x41,
+        0x0C,
+        0x0C,
+        0x80,
+        0x0D,
+        0x00,
+        0x05,
+        0x7D,
+      ]);
       expect(obd.handle([0x01, 0x0C, 0xFF], engine), [0x41, 0x0C, 0x0C, 0x80]);
     });
     test('対応 PID がなければ null', () {
@@ -96,10 +104,29 @@ void main() {
       });
       v.rpm = 900;
       expect(engine.freezeFrame!.capturedAt, at);
-      expect(obd.handle([0x02, 0x0C, 0x00], engine), [0x42, 0x0C, 0x00, 0x26, 0xC0]);
-      expect(obd.handle([0x02, 0x02, 0x00], engine), [0x42, 0x02, 0x00, 0x04, 0x20]);
-      expect(obd.handle([0x02, 0x00, 0x00], engine),
-          [0x42, 0x00, 0x00, 0x7E, 0x3F, 0xA0, 0x13]);
+      expect(obd.handle([0x02, 0x0C, 0x00], engine), [
+        0x42,
+        0x0C,
+        0x00,
+        0x26,
+        0xC0,
+      ]);
+      expect(obd.handle([0x02, 0x02, 0x00], engine), [
+        0x42,
+        0x02,
+        0x00,
+        0x04,
+        0x20,
+      ]);
+      expect(obd.handle([0x02, 0x00, 0x00], engine), [
+        0x42,
+        0x00,
+        0x00,
+        0x7E,
+        0x3F,
+        0xA0,
+        0x13,
+      ]);
     });
     test('2 件目の DTC では上書きしない', () {
       obd.addConfirmedDtc(engine, 'P0420');
@@ -122,13 +149,30 @@ void main() {
 
   group('Mode 06', () {
     test('06 00 はサポート MID ビットマップ', () {
-      expect(obd.handle([0x06, 0x00], engine), [0x46, 0x00, 0x80, 0x00, 0x00, 0x01]);
+      expect(obd.handle([0x06, 0x00], engine), [
+        0x46,
+        0x00,
+        0x80,
+        0x00,
+        0x00,
+        0x01,
+      ]);
     });
     test('06 A2 は 9 バイト × 2 テスト', () {
       final r = obd.handle([0x06, 0xA2], engine)!;
       expect(r[0], 0x46);
       expect(r.length, 1 + 9 * 2);
-      expect(r.sublist(1, 10), [0xA2, 0x0B, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02]);
+      expect(r.sublist(1, 10), [
+        0xA2,
+        0x0B,
+        0x24,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x02,
+      ]);
     });
     test('未対応 MID は無応答', () {
       expect(obd.handle([0x06, 0x02], engine), isNull);
@@ -137,12 +181,30 @@ void main() {
 
   group('Mode 09', () {
     test('09 00 のビットマップ', () {
-      expect(obd.handle([0x09, 0x00], engine), [0x49, 0x00, 0x54, 0x40, 0x00, 0x00]);
-      expect(obd.handle([0x09, 0x00], tcm), [0x49, 0x00, 0x14, 0x40, 0x00, 0x00]);
+      expect(obd.handle([0x09, 0x00], engine), [
+        0x49,
+        0x00,
+        0x54,
+        0x40,
+        0x00,
+        0x00,
+      ]);
+      expect(obd.handle([0x09, 0x00], tcm), [
+        0x49,
+        0x00,
+        0x14,
+        0x40,
+        0x00,
+        0x00,
+      ]);
     });
     test('09 02 VIN', () {
-      expect(obd.handle([0x09, 0x02], engine),
-          [0x49, 0x02, 0x01, ...'WAUZZZ8K9AA000000'.codeUnits]);
+      expect(obd.handle([0x09, 0x02], engine), [
+        0x49,
+        0x02,
+        0x01,
+        ...'WAUZZZ8K9AA000000'.codeUnits,
+      ]);
       expect(obd.handle([0x09, 0x02], tcm), isNull);
     });
     test('09 04 CALID は 16 バイト、09 0A ECU 名は 20 バイト（00 で詰める）', () {
@@ -153,7 +215,15 @@ void main() {
       expect(name.sublist(20), [0, 0, 0]);
     });
     test('09 06 CVN', () {
-      expect(obd.handle([0x09, 0x06], engine), [0x49, 0x06, 0x01, 0x1A, 0x2B, 0x3C, 0x4D]);
+      expect(obd.handle([0x09, 0x06], engine), [
+        0x49,
+        0x06,
+        0x01,
+        0x1A,
+        0x2B,
+        0x3C,
+        0x4D,
+      ]);
     });
   });
 

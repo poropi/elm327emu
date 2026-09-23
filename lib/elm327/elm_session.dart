@@ -15,7 +15,12 @@ import 'response_formatter.dart';
 enum SessionMode { idle, busy, monitoring, lowPower }
 
 class _Pending {
-  _Pending({required this.expected, required this.searching, required this.dropped, required this.mark});
+  _Pending({
+    required this.expected,
+    required this.searching,
+    required this.dropped,
+    required this.mark,
+  });
   final int? expected;
   final bool searching;
   final bool dropped;
@@ -23,7 +28,8 @@ class _Pending {
   final List<String> lines = [];
   int completed = 0;
   final Map<int, Reassembler> _reassemblers = {};
-  Reassembler reassemblerFor(int id) => _reassemblers.putIfAbsent(id, Reassembler.new);
+  Reassembler reassemblerFor(int id) =>
+      _reassemblers.putIfAbsent(id, Reassembler.new);
 }
 
 class _Monitor {
@@ -34,8 +40,16 @@ class _Monitor {
 
 /// 1 接続ぶんの ELM327。入力バイトを受け、AT を処理し、OBD/UDS 要求を仮想バスへ送る。
 class ElmSession {
-  ElmSession({required this.bus, required this.faults, required double Function() voltage}) {
-    at = AtCommands(state, voltage: voltage, ignitionOn: () => !faults.config.ignitionOff);
+  ElmSession({
+    required this.bus,
+    required this.faults,
+    required double Function() voltage,
+  }) {
+    at = AtCommands(
+      state,
+      voltage: voltage,
+      ignitionOn: () => !faults.config.ignitionOff,
+    );
     formatter = ResponseFormatter(state);
     _unlisten = bus.listen(_onBusEvent);
   }
@@ -50,7 +64,9 @@ class ElmSession {
   static const pendingWait = Duration(milliseconds: 5000);
 
   final LineAssembler _assembler = LineAssembler();
-  final StreamController<List<int>> _out = StreamController.broadcast(sync: true);
+  final StreamController<List<int>> _out = StreamController.broadcast(
+    sync: true,
+  );
   late final void Function() _unlisten;
   SessionMode _mode = SessionMode.idle;
   _Pending? _pending;
@@ -138,7 +154,10 @@ class ElmSession {
         _monitor = _Monitor(receiver, transmitter);
         _mode = SessionMode.monitoring;
       case AtRtr():
-        bus.transmit(CanFrame(state.txId, const [], extended: state.is29bit, rtr: true), sender: this);
+        bus.transmit(
+          CanFrame(state.txId, const [], extended: state.is29bit, rtr: true),
+          sender: this,
+        );
         _finish(const []);
     }
   }
@@ -156,7 +175,8 @@ class ElmSession {
       hexText = hexText.substring(0, hexText.length - 1);
     }
     final payload = parseHexBytes(hexText);
-    final maxLength = (state.caf ? 7 : 8) - (state.extendedAddress == null ? 0 : 1);
+    final maxLength =
+        (state.caf ? 7 : 8) - (state.extendedAddress == null ? 0 : 1);
     if (payload == null || payload.length > maxLength) {
       _finish(const ['?']);
       return;
@@ -164,7 +184,9 @@ class ElmSession {
 
     final protocol = state.activeProtocol;
     if (!ElmState.isCanProtocol(protocol)) {
-      _finish([protocol >= 3 && protocol <= 5 ? 'BUS INIT: ...ERROR' : 'NO DATA']);
+      _finish([
+        protocol >= 3 && protocol <= 5 ? 'BUS INIT: ...ERROR' : 'NO DATA',
+      ]);
       return;
     }
     final searching = state.autoSearch && state.established == null;
@@ -185,7 +207,9 @@ class ElmSession {
       if (state.caf) payload.length,
       ...payload,
     ];
-    final padded = state.variableDlc ? data : [...data, ...List.filled(8 - data.length, canPadByte)];
+    final padded = state.variableDlc
+        ? data
+        : [...data, ...List.filled(8 - data.length, canPadByte)];
     final frame = CanFrame(state.txId, padded, extended: state.is29bit);
     state
       ..lastFrame = frame
@@ -226,7 +250,10 @@ class ElmSession {
       ..lastActivity = clock.now();
     p.lines.addAll(formatter.frameLines(f));
     if (frameType(f.data) == FrameType.first && state.autoFlowControl) {
-      bus.transmit(CanFrame(_flowControlId(f), flowControl(), extended: f.extended), sender: this);
+      bus.transmit(
+        CanFrame(_flowControlId(f), flowControl(), extended: f.extended),
+        sender: this,
+      );
     }
     final message = p.reassemblerFor(f.id).add(f.data);
     if (message != null) {
@@ -241,7 +268,8 @@ class ElmSession {
         return;
       }
     }
-    final wait = state.timing == AdaptiveTiming.off || state.timeout < adaptiveWait
+    final wait =
+        state.timing == AdaptiveTiming.off || state.timeout < adaptiveWait
         ? state.timeout
         : adaptiveWait;
     _arm(wait);
@@ -250,7 +278,13 @@ class ElmSession {
   void _onMonitorFrame(CanFrame f) {
     final m = _monitor;
     if (m == null) return;
-    if (!state.acceptsMonitor(f, receiver: m.receiver, transmitter: m.transmitter)) return;
+    if (!state.acceptsMonitor(
+      f,
+      receiver: m.receiver,
+      transmitter: m.transmitter,
+    )) {
+      return;
+    }
     for (final line in formatter.frameLines(f, monitor: true)) {
       _emit('$line$_eol');
     }
@@ -275,7 +309,9 @@ class ElmSession {
       final mark = p.mark;
       if (mark != null) {
         final last = lines.removeLast();
-        lines.add(last.endsWith(' ') ? '$last${mark.text}' : '$last ${mark.text}');
+        lines.add(
+          last.endsWith(' ') ? '$last${mark.text}' : '$last ${mark.text}',
+        );
       }
     }
     _finish(lines);

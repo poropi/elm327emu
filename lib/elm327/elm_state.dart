@@ -38,6 +38,7 @@ class ElmState {
   late int flowMode;
   int? flowHeader;
   List<int>? flowData;
+
   /// PB xx yy（プロトコル B のオプションとボーレート）。受け付けて保持するだけ。
   List<int>? protocolB;
 
@@ -150,7 +151,9 @@ class ElmState {
     if (f.extended != is29bit) return false;
     final user = _userFilter(f);
     if (user != null) return user;
-    if (is29bit) return (f.id & 0x00FFFF00) == (0x00DA0000 | (testerAddress << 8));
+    if (is29bit) {
+      return (f.id & 0x00FFFF00) == (0x00DA0000 | (testerAddress << 8));
+    }
     return f.id >= 0x7E8 && f.id <= 0x7EF;
   }
 

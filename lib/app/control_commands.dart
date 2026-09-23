@@ -9,8 +9,11 @@ import 'emulation_core.dart';
 /// pending on|off / truncate on|off / error <種類> once|always / error off
 /// transmission on|off / rpm <n> / speed <n> / dtc add <code> / dtc clear / disconnect
 /// ```
-Future<String> applyControl(EmulationCore core, String line,
-    {Future<void> Function()? disconnect}) async {
+Future<String> applyControl(
+  EmulationCore core,
+  String line, {
+  Future<void> Function()? disconnect,
+}) async {
   final f = core.faultConfig;
   final parts = line.trim().split(RegExp(r'\s+'));
   bool? onOff(String s) => s == 'on' ? true : (s == 'off' ? false : null);
@@ -36,12 +39,15 @@ Future<String> applyControl(EmulationCore core, String line,
       f.truncateMultiFrame = onOff(v)!;
     case ['error', 'off']:
       f.errorArmed = false;
-    case ['error', final kind, final trigger] when trigger == 'once' || trigger == 'always':
+    case ['error', final kind, final trigger]
+        when trigger == 'once' || trigger == 'always':
       final k = ElmErrorKind.values.where((e) => e.name == kind).firstOrNull;
       if (k == null) return err('unknown error kind: $kind');
       f
         ..error = k
-        ..errorTrigger = trigger == 'once' ? ErrorTrigger.once : ErrorTrigger.always
+        ..errorTrigger = trigger == 'once'
+            ? ErrorTrigger.once
+            : ErrorTrigger.always
         ..errorArmed = true;
     case ['transmission', final v] when onOff(v) != null:
       core.transmission.enabled = onOff(v)!;

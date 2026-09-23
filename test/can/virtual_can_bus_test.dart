@@ -21,8 +21,10 @@ void main() {
 
     test('toString', () {
       expect(CanFrame(0x7E8, [0x04, 0x41]).toString(), '7E8 [2] 04 41');
-      expect(CanFrame(0x18DAF110, [0x01], extended: true).toString(),
-          '18DAF110 [1] 01');
+      expect(
+        CanFrame(0x18DAF110, [0x01], extended: true).toString(),
+        '18DAF110 [1] 01',
+      );
     });
 
     test('== はデータまで比べる', () {
@@ -37,8 +39,10 @@ void main() {
 
     test('toString は rtr のとき末尾に RTR が付く', () {
       expect(CanFrame(0x7DF, [], rtr: true).toString(), '7DF [0]  RTR');
-      expect(CanFrame(0x18DAF110, [], extended: true, rtr: true).toString(),
-          '18DAF110 [0]  RTR');
+      expect(
+        CanFrame(0x18DAF110, [], extended: true, rtr: true).toString(),
+        '18DAF110 [0]  RTR',
+      );
     });
   });
 

@@ -11,7 +11,11 @@ void main() {
     fakeAsync((async) {
       final bus = VirtualCanBus();
       final cfg = FaultConfig();
-      final traffic = PeriodicTraffic(bus, VehicleState.defaults(), FaultInjector(cfg))..start();
+      final traffic = PeriodicTraffic(
+        bus,
+        VehicleState.defaults(),
+        FaultInjector(cfg),
+      )..start();
       final ids = <int>[];
       bus.listen((e) => ids.add(e.frame.id));
       async.elapse(const Duration(seconds: 1));
@@ -36,9 +40,36 @@ void main() {
       final frames = <CanFrame>[];
       bus.listen((e) => frames.add(e.frame));
       async.elapse(const Duration(seconds: 1));
-      expect(frames.firstWhere((f) => f.id == 0x0C9).data, [0x21, 0x98, 0x80, 0, 0, 0, 0, 0]);
-      expect(frames.firstWhere((f) => f.id == 0x3E9).data, [0x18, 0x38, 0, 0, 0, 0, 0, 0]);
-      expect(frames.firstWhere((f) => f.id == 0x4C1).data, [0x7D, 0x82, 0, 0, 0, 0, 0, 0]);
+      expect(frames.firstWhere((f) => f.id == 0x0C9).data, [
+        0x21,
+        0x98,
+        0x80,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+      expect(frames.firstWhere((f) => f.id == 0x3E9).data, [
+        0x18,
+        0x38,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+      expect(frames.firstWhere((f) => f.id == 0x4C1).data, [
+        0x7D,
+        0x82,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
     });
   });
 

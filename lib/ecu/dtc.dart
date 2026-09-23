@@ -18,8 +18,11 @@ List<int> dtcToBytes(String code) {
 
 String dtcFromBytes(int a, int b) {
   final letter = _letters[(a >> 6) & 0x03];
-  final digits = [(a >> 4) & 0x03, a & 0x0F, (b >> 4) & 0x0F, b & 0x0F]
-      .map((d) => d.toRadixString(16).toUpperCase())
-      .join();
+  final digits = [
+    (a >> 4) & 0x03,
+    a & 0x0F,
+    (b >> 4) & 0x0F,
+    b & 0x0F,
+  ].map((d) => d.toRadixString(16).toUpperCase()).join();
   return '$letter$digits';
 }

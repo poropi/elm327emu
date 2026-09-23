@@ -17,7 +17,10 @@ class EmulationCore {
     faults = FaultInjector(faultConfig, random: random);
     obd = ObdServices(vehicle);
     obd.addConfirmedDtc(engine, 'P0301');
-    simulator = Simulator(vehicle, milOn: () => engine.confirmedDtcs.isNotEmpty);
+    simulator = Simulator(
+      vehicle,
+      milOn: () => engine.confirmedDtcs.isNotEmpty,
+    );
     traffic = PeriodicTraffic(bus, vehicle, faults);
   }
 
@@ -40,15 +43,24 @@ class EmulationCore {
   void start() {
     if (_nodes.isNotEmpty) return;
     for (final p in ecus) {
-      final node = Ecu(profile: p, bus: bus, obd: obd, uds: uds, faults: faults);
+      final node = Ecu(
+        profile: p,
+        bus: bus,
+        obd: obd,
+        uds: uds,
+        faults: faults,
+      );
       bus.attach(node);
       _nodes.add(node);
     }
     traffic.start();
   }
 
-  ElmSession newSession() =>
-      ElmSession(bus: bus, faults: faults, voltage: () => vehicle.batteryVoltage);
+  ElmSession newSession() => ElmSession(
+    bus: bus,
+    faults: faults,
+    voltage: () => vehicle.batteryVoltage,
+  );
 
   void dispose() {
     traffic.stop();

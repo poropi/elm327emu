@@ -30,12 +30,21 @@ List<int> _u32(num v) {
 /// 0101 の C バイト（対応している火花点火車のテスト）: 触媒・EVAP・O2・O2 ヒーター。
 const readinessSupported = 0x65;
 
-List<int> _monitorStatus(VehicleState v, EcuProfile e, {required bool sinceClear}) {
+List<int> _monitorStatus(
+  VehicleState v,
+  EcuProfile e, {
+  required bool sinceClear,
+}) {
   final count = e.confirmedDtcs.length.clamp(0, 0x7F).toInt();
   final a = sinceClear ? ((e.confirmedDtcs.isEmpty ? 0 : 0x80) | count) : 0x00;
   if (e.name != 'engine') return [a, 0x00, 0x00, 0x00];
   // B: 共通テスト（ミスファイア・燃料系・コンポーネント）が対応済みかつ完了、火花点火。
-  return [a, 0x07, readinessSupported, v.readinessIncomplete & readinessSupported];
+  return [
+    a,
+    0x07,
+    readinessSupported,
+    v.readinessIncomplete & readinessSupported,
+  ];
 }
 
 const _gearRatios = [3.5, 2.1, 1.4, 1.0, 0.8, 0.65];
@@ -74,7 +83,11 @@ final List<PidDef> _defs = [
   PidDef(0x31, '消去後の距離', (v, e) => _u16(v.distanceSinceClearKm)),
   PidDef(0x33, '大気圧', (v, e) => _u8(v.baroKpa)),
   PidDef(0x3C, '触媒温度 B1S1', (v, e) => _u16((v.catalystTempC + 40) * 10)),
-  PidDef(0x41, '今回サイクルのモニタ状態', (v, e) => _monitorStatus(v, e, sinceClear: false)),
+  PidDef(
+    0x41,
+    '今回サイクルのモニタ状態',
+    (v, e) => _monitorStatus(v, e, sinceClear: false),
+  ),
   PidDef(0x42, '制御モジュール電圧', (v, e) => _u16(v.batteryVoltage * 1000)),
   PidDef(0x43, '絶対負荷', (v, e) => _u16(v.absLoadPct * 255 / 100)),
   PidDef(0x44, '指令空燃比', (v, e) => _u16(v.lambda * 32768)),
@@ -89,7 +102,11 @@ final List<PidDef> _defs = [
   PidDef(0x51, '燃料の種類', (v, e) => [0x01]),
   PidDef(0x5C, '油温', (v, e) => [temp40(v.oilTempC)]),
   PidDef(0x5E, '燃料消費率', (v, e) => _u16(v.fuelRateLph * 20)),
-  PidDef(0xA4, '実ギア', (v, e) => [0x02, 0x00, ..._u16(gearRatioFor(v.speedKmh) * 1000)]),
+  PidDef(
+    0xA4,
+    '実ギア',
+    (v, e) => [0x02, 0x00, ..._u16(gearRatioFor(v.speedKmh) * 1000)],
+  ),
   PidDef(0xA6, '走行距離計', (v, e) => _u32(v.odometerKm * 10)),
 ];
 
@@ -106,7 +123,8 @@ List<int> supportBitmap(int base, Set<int> supported) {
   final out = [0, 0, 0, 0];
   for (var i = 0; i < 32; i++) {
     final pid = base + 1 + i;
-    final on = supported.contains(pid) ||
+    final on =
+        supported.contains(pid) ||
         (pid == base + 0x20 && supported.any((p) => p > base + 0x20));
     if (on) out[i ~/ 8] |= 0x80 >> (i % 8);
   }

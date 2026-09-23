@@ -16,7 +16,11 @@ List<List<int>> segment(List<int> payload, {bool pad = true}) {
     ];
   }
   final out = <List<int>>[
-    p([0x10 | (payload.length >> 8), payload.length & 0xFF, ...payload.sublist(0, 6)]),
+    p([
+      0x10 | (payload.length >> 8),
+      payload.length & 0xFF,
+      ...payload.sublist(0, 6),
+    ]),
   ];
   var seq = 1;
   for (var i = 6; i < payload.length; i += 7) {

@@ -22,7 +22,10 @@ class TcpTransport {
 
   Future<void> start() async {
     if (_server != null) return;
-    final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, _requestedPort);
+    final server = await ServerSocket.bind(
+      InternetAddress.loopbackIPv4,
+      _requestedPort,
+    );
     _server = server;
     server.listen(_accept, onError: (Object e) => _conn.add('error $e'));
   }

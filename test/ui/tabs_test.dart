@@ -10,16 +10,24 @@ void main() {
   testWidgets('タブは 6 つ', (tester) async {
     await pumpHome(tester);
     for (final t in ['接続', '車両', 'DTC', 'ECU', '障害', 'ログ']) {
-      expect(find.descendant(of: find.byType(TabBar), matching: find.text(t)), findsOneWidget);
+      expect(
+        find.descendant(of: find.byType(TabBar), matching: find.text(t)),
+        findsOneWidget,
+      );
     }
   });
 
-  testWidgets('DTC タブ: 小文字・空白を直して追加・形式違い・削除・消去（Review Focus 5）', (tester) async {
+  testWidgets('DTC タブ: 小文字・空白を直して追加・形式違い・削除・消去（Review Focus 5）', (
+    tester,
+  ) async {
     final (c, _) = await pumpHome(tester);
     await openTab(tester, 'DTC');
     expect(find.text('MIL 点灯中 · 確定 1 件（0101 の応答に反映）'), findsOneWidget);
 
-    await tester.enterText(find.byKey(const Key('dtc-input-confirmed')), ' p0420 ');
+    await tester.enterText(
+      find.byKey(const Key('dtc-input-confirmed')),
+      ' p0420 ',
+    );
     await tester.tap(find.byKey(const Key('dtc-add-confirmed')));
     await tester.pump();
     expect(c.core.engine.confirmedDtcs, ['P0301', 'P0420']);
@@ -60,7 +68,10 @@ void main() {
     expect(c.core.engine.vin, 'WAUZZZ8K9AA000000');
 
     await reveal(tester, find.byKey(const Key('ecu-vin')), EcuTab);
-    await tester.enterText(find.byKey(const Key('ecu-vin')), 'JT2BF22K1W0123456');
+    await tester.enterText(
+      find.byKey(const Key('ecu-vin')),
+      'JT2BF22K1W0123456',
+    );
     await reveal(tester, find.byKey(const Key('ecu-save')), EcuTab);
     await tester.tap(find.byKey(const Key('ecu-save')));
     await tester.pump();
@@ -88,7 +99,9 @@ void main() {
     final (c, _) = await pumpHome(tester);
     await openTab(tester, '障害');
     expect(find.text('有効な障害はありません'), findsOneWidget);
-    final disconnect = tester.widget<FilledButton>(find.byKey(const Key('fault-disconnect')));
+    final disconnect = tester.widget<FilledButton>(
+      find.byKey(const Key('fault-disconnect')),
+    );
     expect(disconnect.onPressed, isNull);
 
     await tester.tap(find.byKey(const Key('fault-ignition')));
@@ -98,7 +111,11 @@ void main() {
 
     c.updateFaults((f) => f.delayMs = 350);
     await tester.pump();
-    await reveal(tester, find.text('ATST 200ms を超えるため、今は NO DATA になります'), FaultsTab);
+    await reveal(
+      tester,
+      find.text('ATST 200ms を超えるため、今は NO DATA になります'),
+      FaultsTab,
+    );
 
     await reveal(tester, find.byKey(const Key('fault-error-fire')), FaultsTab);
     await tester.tap(find.byKey(const Key('fault-error-fire')));
@@ -110,14 +127,22 @@ void main() {
     expect(c.core.faultConfig.errorArmed, isFalse);
 
     // トランスミッションは既定で無効な ECU → 無応答スイッチは操作できない。
-    await reveal(tester, find.byKey(const Key('fault-silent-transmission')), FaultsTab);
-    var silentSwitch = tester.widget<SwitchListTile>(find.byKey(const Key('fault-silent-transmission')));
+    await reveal(
+      tester,
+      find.byKey(const Key('fault-silent-transmission')),
+      FaultsTab,
+    );
+    var silentSwitch = tester.widget<SwitchListTile>(
+      find.byKey(const Key('fault-silent-transmission')),
+    );
     expect(silentSwitch.onChanged, isNull);
     expect(c.core.transmission.enabled, isFalse);
 
     c.setEcuEnabled(c.core.transmission, true);
     await tester.pump();
-    silentSwitch = tester.widget<SwitchListTile>(find.byKey(const Key('fault-silent-transmission')));
+    silentSwitch = tester.widget<SwitchListTile>(
+      find.byKey(const Key('fault-silent-transmission')),
+    );
     expect(silentSwitch.onChanged, isNotNull);
   });
 }

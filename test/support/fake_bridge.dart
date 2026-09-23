@@ -5,26 +5,42 @@ import 'package:elm327emu/transport/transport_bridge.dart';
 
 /// Platform Channel を使わない TransportBridge。
 class FakeTransportBridge extends TransportBridge {
-  final rx = StreamController<({TransportType transport, List<int> bytes})>.broadcast(sync: true);
-  final conn = StreamController<({TransportType transport, String state, String device})>.broadcast(sync: true);
+  final rx =
+      StreamController<({TransportType transport, List<int> bytes})>.broadcast(
+        sync: true,
+      );
+  final conn =
+      StreamController<
+        ({TransportType transport, String state, String device})
+      >.broadcast(sync: true);
   final sent = <(TransportType, List<int>)>[];
   final calls = <String>[];
 
   /// テストで disconnect の失敗を再現するための例外（transport ごと）。
   final Map<TransportType, Object> disconnectErrors = {};
 
-  String sentText(TransportType t) => sent.where((e) => e.$1 == t).map((e) => String.fromCharCodes(e.$2)).join();
+  String sentText(TransportType t) => sent
+      .where((e) => e.$1 == t)
+      .map((e) => String.fromCharCodes(e.$2))
+      .join();
 
   @override
-  Future<List<TransportType>> capabilities() async => [TransportType.ble, TransportType.spp];
+  Future<List<TransportType>> capabilities() async => [
+    TransportType.ble,
+    TransportType.spp,
+  ];
   @override
-  Stream<({TransportType transport, List<int> bytes})> get onReceive => rx.stream;
+  Stream<({TransportType transport, List<int> bytes})> get onReceive =>
+      rx.stream;
   @override
-  Stream<({TransportType transport, String state, String device})> get onConnection => conn.stream;
+  Stream<({TransportType transport, String state, String device})>
+  get onConnection => conn.stream;
   @override
-  Future<void> send(TransportType t, List<int> bytes) async => sent.add((t, bytes));
+  Future<void> send(TransportType t, List<int> bytes) async =>
+      sent.add((t, bytes));
   @override
-  Future<void> startBle({bool useFff0 = false}) async => calls.add('startBle:$useFff0');
+  Future<void> startBle({bool useFff0 = false}) async =>
+      calls.add('startBle:$useFff0');
   @override
   Future<void> stopBle() async => calls.add('stopBle');
   @override

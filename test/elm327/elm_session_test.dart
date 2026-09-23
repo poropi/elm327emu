@@ -5,9 +5,17 @@ import 'package:elm327emu/can/iso_tp.dart';
 import 'package:elm327emu/elm327/elm_session.dart';
 import '../support/elm_harness.dart';
 
-void t(String name, void Function(ElmHarness h, FakeAsync async) body,
-    {bool transmission = false}) {
-  test(name, () => fakeAsync((async) => body(ElmHarness(async, transmission: transmission), async)));
+void t(
+  String name,
+  void Function(ElmHarness h, FakeAsync async) body, {
+  bool transmission = false,
+}) {
+  test(
+    name,
+    () => fakeAsync(
+      (async) => body(ElmHarness(async, transmission: transmission), async),
+    ),
+  );
 }
 
 Duration timed(FakeAsync async, void Function() fn) {
@@ -74,7 +82,9 @@ void main() {
       h.send('ATSP7');
       final fcIds = <int>[];
       final cancel = h.bus.listen((e) {
-        if (frameType(e.frame.data) == FrameType.flowControl) fcIds.add(e.frame.id);
+        if (frameType(e.frame.data) == FrameType.flowControl) {
+          fcIds.add(e.frame.id);
+        }
       });
       h.send('0902');
       cancel();
@@ -90,14 +100,18 @@ void main() {
     });
     t('VIN（H0）は総バイト数と連番', (h, a) {
       h.quiet();
-      expect(h.send('0902'),
-          '014\r0: 49 02 01 57 41 55 \r1: 5A 5A 5A 38 4B 39 41 \r2: 41 30 30 30 30 30 30 \r\r>');
+      expect(
+        h.send('0902'),
+        '014\r0: 49 02 01 57 41 55 \r1: 5A 5A 5A 38 4B 39 41 \r2: 41 30 30 30 30 30 30 \r\r>',
+      );
     });
     t('VIN（H1）は 1 フレーム 1 行', (h, a) {
       h.quiet();
       h.send('ATH1');
-      expect(h.send('0902'),
-          '7E8 10 14 49 02 01 57 41 55 \r7E8 21 5A 5A 5A 38 4B 39 41 \r7E8 22 41 30 30 30 30 30 30 \r\r>');
+      expect(
+        h.send('0902'),
+        '7E8 10 14 49 02 01 57 41 55 \r7E8 21 5A 5A 5A 38 4B 39 41 \r7E8 22 41 30 30 30 30 30 30 \r\r>',
+      );
     });
     t('CFC0 では FC を送らないので最初のフレームで止まる', (h, a) {
       h.quiet();
@@ -133,8 +147,10 @@ void main() {
       h.quiet();
       expect(h.send('22F190'), 'NO DATA\r\r>');
       h.send('ATSH7E0');
-      expect(h.send('22F190'),
-          '014\r0: 62 F1 90 57 41 55 \r1: 5A 5A 5A 38 4B 39 41 \r2: 41 30 30 30 30 30 30 \r\r>');
+      expect(
+        h.send('22F190'),
+        '014\r0: 62 F1 90 57 41 55 \r1: 5A 5A 5A 38 4B 39 41 \r2: 41 30 30 30 30 30 30 \r\r>',
+      );
       expect(h.send('221234'), '7F 22 31 \r\r>');
       expect(h.send('1003'), '7F 10 11 \r\r>');
     });
@@ -218,7 +234,10 @@ void main() {
   group('STOPPED と入力の割り込み', () {
     t('応答待ちに文字が届くと STOPPED', (h, a) {
       h.quiet();
-      final out = h.sendRaw('010C\rX', elapse: const Duration(milliseconds: 100));
+      final out = h.sendRaw(
+        '010C\rX',
+        elapse: const Duration(milliseconds: 100),
+      );
       expect(out, 'STOPPED\r\r>');
       expect(h.session.mode, SessionMode.idle);
     });
@@ -232,8 +251,10 @@ void main() {
       expect(h.sendRaw('0C\r', untilPrompt: true), '41 0C 0C 80 \r\r>');
     });
     t('AT 2 つを 1 回で送ると両方処理する', (h, a) {
-      expect(h.sendRaw('ATE0\rATH1\r', elapse: const Duration(milliseconds: 1)),
-          'ATE0\rOK\r\r>OK\r\r>');
+      expect(
+        h.sendRaw('ATE0\rATH1\r', elapse: const Duration(milliseconds: 1)),
+        'ATE0\rOK\r\r>OK\r\r>',
+      );
     });
     t('LP の後は何を送っても応答せず、その次から普通に動く', (h, a) {
       h.send('ATE0');
@@ -276,7 +297,10 @@ void main() {
       h.quiet();
       h.send('ATSH7E0');
       h.faultConfig.responsePending = true;
-      final d = timed(a, () => expect(h.send('010C'), '7F 01 78 \r41 0C 0C 80 \r\r>'));
+      final d = timed(
+        a,
+        () => expect(h.send('010C'), '7F 01 78 \r41 0C 0C 80 \r\r>'),
+      );
       expect(d.inMilliseconds, inInclusiveRange(1058, 1060));
     });
     t('途中欠落: 最初のフレームだけ表示して終わる', (h, a) {
@@ -353,6 +377,9 @@ void main() {
     h.quiet();
     expect(h.sendRaw('ATMA\r', elapse: const Duration(milliseconds: 5)), '');
     expect(h.session.mode, SessionMode.monitoring);
-    expect(h.sendRaw('X', elapse: const Duration(milliseconds: 1)), 'STOPPED\r\r>');
+    expect(
+      h.sendRaw('X', elapse: const Duration(milliseconds: 1)),
+      'STOPPED\r\r>',
+    );
   });
 }

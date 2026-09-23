@@ -18,8 +18,12 @@ class ResponseFormatter {
 
   String idText(CanFrame f) {
     if (!f.extended) return hexN(f.id, 3);
-    final parts = [(f.id >> 24) & 0xFF, (f.id >> 16) & 0xFF, (f.id >> 8) & 0xFF, f.id & 0xFF]
-        .map(hex2);
+    final parts = [
+      (f.id >> 24) & 0xFF,
+      (f.id >> 16) & 0xFF,
+      (f.id >> 8) & 0xFF,
+      f.id & 0xFF,
+    ].map(hex2);
     return state.spaces ? parts.join(' ') : parts.join();
   }
 
@@ -30,7 +34,9 @@ class ResponseFormatter {
           ? '${idText(f)}$sep${state.dlc ? '${f.dlc}$sep' : ''}'
           : '';
       if (f.rtr) return state.headers || !state.caf ? ['${head}RTR'] : [];
-      final fc = monitor && frameType(f.data) == FrameType.flowControl ? 'FC:$sep' : '';
+      final fc = monitor && frameType(f.data) == FrameType.flowControl
+          ? 'FC:$sep'
+          : '';
       return ['$head$fc${bytes(f.data)}'];
     }
     if (f.rtr) return [];
@@ -48,7 +54,9 @@ class ResponseFormatter {
         if (rem == null || rem <= 0) return [];
         final take = rem < f.data.length - 1 ? rem : f.data.length - 1;
         _remaining[f.id] = rem - take;
-        return ['${hexN(f.data[0] & 0x0F, 1)}:$sep${bytes(f.data.sublist(1, 1 + take))}'];
+        return [
+          '${hexN(f.data[0] & 0x0F, 1)}:$sep${bytes(f.data.sublist(1, 1 + take))}',
+        ];
       case FrameType.flowControl:
       case FrameType.invalid:
         return [];

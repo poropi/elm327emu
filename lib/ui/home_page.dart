@@ -19,37 +19,50 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: tabs.length,
-      child: Builder(builder: (context) {
-        final c = context.watch<EmulatorController>();
-        return Scaffold(
-          backgroundColor: AppColors.tile,
-          appBar: AppBar(
-            backgroundColor: AppColors.teal,
-            foregroundColor: Colors.white,
-            title: const Text('ELM327 Emulator'),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: Chip(label: Text(c.headlineStatus, style: const TextStyle(fontSize: 12))),
+      child: Builder(
+        builder: (context) {
+          final c = context.watch<EmulatorController>();
+          return Scaffold(
+            backgroundColor: AppColors.tile,
+            appBar: AppBar(
+              backgroundColor: AppColors.teal,
+              foregroundColor: Colors.white,
+              title: const Text('ELM327 Emulator'),
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Chip(
+                    label: Text(
+                      c.headlineStatus,
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ),
+              ],
+              bottom: TabBar(
+                labelColor: Colors.white,
+                unselectedLabelColor: AppColors.tabInactive,
+                indicatorColor: Colors.white,
+                tabs: [for (final t in tabs) Tab(text: t)],
               ),
-            ],
-            bottom: TabBar(
-              labelColor: Colors.white,
-              unselectedLabelColor: AppColors.tabInactive,
-              indicatorColor: Colors.white,
-              tabs: [for (final t in tabs) Tab(text: t)],
             ),
-          ),
-          body: TabBarView(children: [
-            ConnectionTab(onShowLog: () => DefaultTabController.of(context).animateTo(tabs.indexOf('ログ'))),
-            const VehicleTab(),
-            const DtcTab(),
-            const EcuTab(),
-            const FaultsTab(),
-            const LogTab(),
-          ]),
-        );
-      }),
+            body: TabBarView(
+              children: [
+                ConnectionTab(
+                  onShowLog: () => DefaultTabController.of(
+                    context,
+                  ).animateTo(tabs.indexOf('ログ')),
+                ),
+                const VehicleTab(),
+                const DtcTab(),
+                const EcuTab(),
+                const FaultsTab(),
+                const LogTab(),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

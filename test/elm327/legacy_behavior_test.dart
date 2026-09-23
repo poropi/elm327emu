@@ -112,7 +112,10 @@ void main() {
     });
     t('0902 VIN は複数フレーム', (h) {
       h.quiet();
-      expect(h.send('0902').split('\r').first, matches(RegExp(r'^[0-9A-F]{3}$')));
+      expect(
+        h.send('0902').split('\r').first,
+        matches(RegExp(r'^[0-9A-F]{3}$')),
+      );
     });
     t('未対応 PID は NO DATA', (h) {
       h.quiet();

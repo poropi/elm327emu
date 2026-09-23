@@ -13,7 +13,13 @@ import 'package:elm327emu/vehicle/vehicle_state.dart';
 class _Bench {
   _Bench() {
     for (final p in [engine, tcm]) {
-      final e = Ecu(profile: p, bus: bus, obd: obd, uds: UdsServices(), faults: faults);
+      final e = Ecu(
+        profile: p,
+        bus: bus,
+        obd: obd,
+        uds: UdsServices(),
+        faults: faults,
+      );
       ecus.add(e);
       bus.attach(e);
     }
@@ -32,8 +38,10 @@ class _Bench {
   final got = <CanFrame>[];
   final ecus = <Ecu>[];
 
-  void send(int id, List<int> payload, {bool ext = false}) =>
-      bus.transmit(CanFrame(id, segment(payload).single, extended: ext), sender: tester);
+  void send(int id, List<int> payload, {bool ext = false}) => bus.transmit(
+    CanFrame(id, segment(payload).single, extended: ext),
+    sender: tester,
+  );
 }
 
 List<int> _pad(List<int> d) => [...d, ...List.filled(8 - d.length, 0)];
@@ -46,7 +54,9 @@ void main() {
       async.elapse(const Duration(milliseconds: 7));
       expect(b.got, isEmpty);
       async.elapse(const Duration(milliseconds: 1));
-      expect(b.got, [CanFrame(0x7E8, _pad([0x04, 0x41, 0x0C, 0x0C, 0x80]))]);
+      expect(b.got, [
+        CanFrame(0x7E8, _pad([0x04, 0x41, 0x0C, 0x0C, 0x80])),
+      ]);
     });
   });
 
@@ -115,10 +125,16 @@ void main() {
       final b = _Bench();
       b.send(0x7E0, [0x09, 0x02]);
       async.elapse(const Duration(milliseconds: 8));
-      b.bus.transmit(CanFrame(0x7E0, flowControl(blockSize: 1)), sender: b.tester);
+      b.bus.transmit(
+        CanFrame(0x7E0, flowControl(blockSize: 1)),
+        sender: b.tester,
+      );
       async.elapse(const Duration(milliseconds: 10));
       expect(b.got.length, 2);
-      b.bus.transmit(CanFrame(0x7E0, flowControl(blockSize: 1)), sender: b.tester);
+      b.bus.transmit(
+        CanFrame(0x7E0, flowControl(blockSize: 1)),
+        sender: b.tester,
+      );
       async.elapse(const Duration(milliseconds: 10));
       expect(b.got.length, 3);
     });

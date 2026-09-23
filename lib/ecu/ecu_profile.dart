@@ -15,16 +15,16 @@ const Set<int> engineMode01Pids = {
 /// Mode 22 の DID の値。ASCII か 16 進のバイト列。
 class DidValue {
   DidValue.ascii(String text)
-      : isAscii = true,
-        bytes = List.unmodifiable(text.codeUnits) {
+    : isAscii = true,
+      bytes = List.unmodifiable(text.codeUnits) {
     if (text.isEmpty || text.codeUnits.any((c) => c < 0x20 || c > 0x7E)) {
       throw ArgumentError.value(text, 'text', '表示可能な ASCII 1 文字以上');
     }
   }
 
   DidValue.hex(List<int> bytes)
-      : isAscii = false,
-        bytes = List.unmodifiable(bytes) {
+    : isAscii = false,
+      bytes = List.unmodifiable(bytes) {
     if (bytes.isEmpty || bytes.any((b) => b < 0 || b > 0xFF)) {
       throw ArgumentError.value(bytes, 'bytes', '1 バイト以上');
     }
@@ -39,11 +39,11 @@ class DidValue {
 
 /// フリーズフレーム。確定 DTC を追加した時点の Mode 01 の値（PID → データバイト）。
 class FreezeFrame {
-  FreezeFrame(
-      {required this.dtc,
-      required Map<int, List<int>> pids,
-      required this.capturedAt})
-      : pids = Map.unmodifiable(pids);
+  FreezeFrame({
+    required this.dtc,
+    required Map<int, List<int>> pids,
+    required this.capturedAt,
+  }) : pids = Map.unmodifiable(pids);
 
   final String dtc;
   final Map<int, List<int>> pids;
@@ -65,46 +65,46 @@ class EcuProfile {
     required this.cvn,
     required this.ecuName,
     required Map<int, DidValue> dids,
-  })  : mode01Pids = Set.unmodifiable(mode01Pids),
-        dids = Map.of(dids);
+  }) : mode01Pids = Set.unmodifiable(mode01Pids),
+       dids = Map.of(dids);
 
   factory EcuProfile.engine() => EcuProfile(
-        name: 'engine',
-        label: 'エンジン',
-        requestId11: 0x7E0,
-        address29: 0x10,
-        enabled: true,
-        baseLatency: const Duration(milliseconds: 8),
-        mode01Pids: engineMode01Pids,
-        vin: 'WAUZZZ8K9AA000000',
-        calid: '8K0907115B  0010',
-        cvn: [0x1A, 0x2B, 0x3C, 0x4D],
-        ecuName: 'ECM-EngineControl',
-        dids: {
-          0xF190: DidValue.ascii('WAUZZZ8K9AA000000'),
-          0xF187: DidValue.ascii('8K0907115B'),
-          0xF18C: DidValue.ascii('SN00123456'),
-          0xF191: DidValue.hex([0x0A, 0x1B, 0x2C, 0x3D]),
-        },
-      );
+    name: 'engine',
+    label: 'エンジン',
+    requestId11: 0x7E0,
+    address29: 0x10,
+    enabled: true,
+    baseLatency: const Duration(milliseconds: 8),
+    mode01Pids: engineMode01Pids,
+    vin: 'WAUZZZ8K9AA000000',
+    calid: '8K0907115B  0010',
+    cvn: [0x1A, 0x2B, 0x3C, 0x4D],
+    ecuName: 'ECM-EngineControl',
+    dids: {
+      0xF190: DidValue.ascii('WAUZZZ8K9AA000000'),
+      0xF187: DidValue.ascii('8K0907115B'),
+      0xF18C: DidValue.ascii('SN00123456'),
+      0xF191: DidValue.hex([0x0A, 0x1B, 0x2C, 0x3D]),
+    },
+  );
 
   factory EcuProfile.transmission() => EcuProfile(
-        name: 'transmission',
-        label: 'トランスミッション',
-        requestId11: 0x7E1,
-        address29: 0x18,
-        enabled: false,
-        baseLatency: const Duration(milliseconds: 15),
-        mode01Pids: {0x01, 0xA4},
-        vin: '',
-        calid: 'TCM0AW300000001',
-        cvn: [0x5E, 0x6F, 0x70, 0x81],
-        ecuName: 'TCM-TransmissionCtl',
-        dids: {
-          0xF187: DidValue.ascii('0AW300'),
-          0xF18C: DidValue.ascii('SN00987654'),
-        },
-      );
+    name: 'transmission',
+    label: 'トランスミッション',
+    requestId11: 0x7E1,
+    address29: 0x18,
+    enabled: false,
+    baseLatency: const Duration(milliseconds: 15),
+    mode01Pids: {0x01, 0xA4},
+    vin: '',
+    calid: 'TCM0AW300000001',
+    cvn: [0x5E, 0x6F, 0x70, 0x81],
+    ecuName: 'TCM-TransmissionCtl',
+    dids: {
+      0xF187: DidValue.ascii('0AW300'),
+      0xF18C: DidValue.ascii('SN00987654'),
+    },
+  );
 
   final String name;
   final String label;

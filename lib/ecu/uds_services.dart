@@ -2,7 +2,11 @@ import 'ecu_profile.dart';
 
 /// OBD 以外のサービス。Mode 22（ReadDataByIdentifier）と否定応答のみ。
 class UdsServices {
-  List<int>? handle(List<int> request, EcuProfile ecu, {required bool functional}) {
+  List<int>? handle(
+    List<int> request,
+    EcuProfile ecu, {
+    required bool functional,
+  }) {
     if (request.isEmpty) return null;
     final sid = request[0];
     if (functional) return null;

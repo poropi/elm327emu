@@ -29,19 +29,27 @@ class TransportBridge {
       _control.invokeMethod('disconnect', {'transport': t.wire});
 
   Future<void> send(TransportType t, List<int> bytes) => _control.invokeMethod(
-      'send', {'transport': t.wire, 'bytes': Uint8List.fromList(bytes)});
+    'send',
+    {'transport': t.wire, 'bytes': Uint8List.fromList(bytes)},
+  );
 
   Stream<({TransportType transport, List<int> bytes})> get onReceive => _raw
       .where((e) => e['type'] == 'rx')
-      .map((e) => (
-            transport: TransportTypeName.fromWire(e['transport'] as String),
-            bytes: (e['bytes'] as List).cast<int>(),
-          ));
+      .map(
+        (e) => (
+          transport: TransportTypeName.fromWire(e['transport'] as String),
+          bytes: (e['bytes'] as List).cast<int>(),
+        ),
+      );
 
   Stream<({TransportType transport, String state, String device})>
-      get onConnection => _raw.where((e) => e['type'] == 'conn').map((e) => (
-            transport: TransportTypeName.fromWire(e['transport'] as String),
-            state: e['state'] as String,
-            device: (e['device'] as String?) ?? '',
-          ));
+  get onConnection => _raw
+      .where((e) => e['type'] == 'conn')
+      .map(
+        (e) => (
+          transport: TransportTypeName.fromWire(e['transport'] as String),
+          state: e['state'] as String,
+          device: (e['device'] as String?) ?? '',
+        ),
+      );
 }

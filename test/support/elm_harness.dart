@@ -18,7 +18,9 @@ class ElmHarness {
     obd = ObdServices(vehicle);
     obd.addConfirmedDtc(engineProfile, 'P0301');
     for (final p in [engineProfile, transmissionProfile]) {
-      bus.attach(Ecu(profile: p, bus: bus, obd: obd, uds: UdsServices(), faults: faults));
+      bus.attach(
+        Ecu(profile: p, bus: bus, obd: obd, uds: UdsServices(), faults: faults),
+      );
     }
     session = newSession();
   }
@@ -36,7 +38,11 @@ class ElmHarness {
   int _read = 0;
 
   ElmSession newSession({StringBuffer? sink}) {
-    final s = ElmSession(bus: bus, faults: faults, voltage: () => vehicle.batteryVoltage);
+    final s = ElmSession(
+      bus: bus,
+      faults: faults,
+      voltage: () => vehicle.batteryVoltage,
+    );
     s.output.listen((b) => (sink ?? _out).write(String.fromCharCodes(b)));
     return s;
   }
@@ -46,11 +52,19 @@ class ElmHarness {
   /// [cmd] + CR を送り、'>' が出るまで（最大 20 秒ぶん）時間を進め、その間の出力を返す。
   String send(String cmd) => sendRaw('$cmd\r', untilPrompt: true);
 
-  String sendRaw(String raw, {bool untilPrompt = false, Duration elapse = Duration.zero}) {
+  String sendRaw(
+    String raw, {
+    bool untilPrompt = false,
+    Duration elapse = Duration.zero,
+  }) {
     final start = _read;
     session.input(raw.codeUnits);
     if (untilPrompt) {
-      for (var i = 0; i < 20000 && !_out.toString().substring(start).endsWith('>'); i++) {
+      for (
+        var i = 0;
+        i < 20000 && !_out.toString().substring(start).endsWith('>');
+        i++
+      ) {
         async.elapse(const Duration(milliseconds: 1));
       }
     } else {

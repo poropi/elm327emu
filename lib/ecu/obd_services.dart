@@ -21,9 +21,7 @@ const Map<int, List<_MonitorTest>> _mode06 = {
     _MonitorTest(0x80, 0x0B, 0x0158, 0x0100, 0x0200),
     _MonitorTest(0x81, 0x0B, 0x0098, 0x0000, 0x00C8),
   ],
-  0x21: [
-    _MonitorTest(0x80, 0x24, 0x0012, 0x0000, 0x0040),
-  ],
+  0x21: [_MonitorTest(0x80, 0x24, 0x0012, 0x0000, 0x0040)],
   0xA2: [
     _MonitorTest(0x0B, 0x24, 0x0000, 0x0000, 0x0002),
     _MonitorTest(0x0C, 0x24, 0x0001, 0x0000, 0x0002),
@@ -79,7 +77,8 @@ class ObdServices {
       capturedAt: clock.now(),
       pids: {
         for (final pid in ecu.mode01Pids)
-          if (pid != 0x01 && pid != 0x41) pid: pidTable[pid]!.encode(vehicle, ecu),
+          if (pid != 0x01 && pid != 0x41)
+            pid: pidTable[pid]!.encode(vehicle, ecu),
       },
     );
   }
@@ -104,7 +103,11 @@ class ObdServices {
     final out = <int>[0x41];
     for (final pid in request.sublist(1)) {
       final data = mode01Data(pid, vehicle, ecu);
-      if (data != null) out..add(pid)..addAll(data);
+      if (data != null) {
+        out
+          ..add(pid)
+          ..addAll(data);
+      }
     }
     return out.length == 1 ? null : out;
   }
@@ -127,17 +130,19 @@ class ObdServices {
   }
 
   List<int> _dtcList(int sid, List<String> codes) => [
-        sid,
-        codes.length,
-        for (final c in codes) ...dtcToBytes(c),
-      ];
+    sid,
+    codes.length,
+    for (final c in codes) ...dtcToBytes(c),
+  ];
 
   List<int>? _mode06Response(List<int> request) {
     if (request.length != 2) return null;
     final mid = request[1];
     final mids = _mode06.keys.toSet();
     if (isBitmapPid(mid)) {
-      return bitmapAvailable(mid, mids) ? [0x46, mid, ...supportBitmap(mid, mids)] : null;
+      return bitmapAvailable(mid, mids)
+          ? [0x46, mid, ...supportBitmap(mid, mids)]
+          : null;
     }
     final tests = _mode06[mid];
     if (tests == null) return null;

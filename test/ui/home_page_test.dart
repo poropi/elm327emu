@@ -11,7 +11,10 @@ void main() {
     await pumpHome(tester);
     expect(find.text('ELM327 Emulator'), findsOneWidget);
     for (final t in ['接続', '車両', 'ログ']) {
-      expect(find.descendant(of: find.byType(TabBar), matching: find.text(t)), findsOneWidget);
+      expect(
+        find.descendant(of: find.byType(TabBar), matching: find.text(t)),
+        findsOneWidget,
+      );
     }
     expect(find.text('未接続'), findsOneWidget);
   });
@@ -27,7 +30,9 @@ void main() {
     await tester.pump();
     expect(b.calls, ['startBle:false']);
     expect(find.text('待ち受け中'), findsOneWidget);
-    final disconnect = tester.widget<FilledButton>(find.byKey(const Key('disconnect-ble')));
+    final disconnect = tester.widget<FilledButton>(
+      find.byKey(const Key('disconnect-ble')),
+    );
     expect(disconnect.onPressed, isNull); // 接続中でなければ押せない
   });
 
@@ -64,8 +69,16 @@ void main() {
   testWidgets('ログタブ: 表示・絞り込み・クリア', (tester) async {
     final (c, _) = await pumpHome(tester);
     c.log
-      ..add(LogEntry(DateTime(2026, 9, 23, 14, 2, 11, 201), LogKind.input, 'ATZ'))
-      ..add(LogEntry(DateTime(2026, 9, 23, 14, 2, 11, 845), LogKind.can, 'RX 7E8 [8] 06 41 00'));
+      ..add(
+        LogEntry(DateTime(2026, 9, 23, 14, 2, 11, 201), LogKind.input, 'ATZ'),
+      )
+      ..add(
+        LogEntry(
+          DateTime(2026, 9, 23, 14, 2, 11, 845),
+          LogKind.can,
+          'RX 7E8 [8] 06 41 00',
+        ),
+      );
     c.notify();
     await openTab(tester, 'ログ');
     expect(find.text('14:02:11.201 ← ATZ'), findsOneWidget);
@@ -92,7 +105,14 @@ void main() {
       ..headers = true
       ..craId = 0x7E9;
     final items = ElmStateGrid.items(s);
-    expect(items.map((e) => e.$1), ['プロトコル', '送信ヘッダ', '表示', 'CAN 整形', 'タイムアウト', '受信フィルタ']);
+    expect(items.map((e) => e.$1), [
+      'プロトコル',
+      '送信ヘッダ',
+      '表示',
+      'CAN 整形',
+      'タイムアウト',
+      '受信フィルタ',
+    ]);
     expect(items[2].$2, 'E1 L0 S1 H1 D0');
     expect(items[3].$2, 'CAF1 · NL');
     expect(items[4].$2, 'ST 32 (200ms) · AT1');

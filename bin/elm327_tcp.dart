@@ -31,11 +31,15 @@ Future<void> main(List<String> argv) async {
   final core = EmulationCore()..start();
   core.transmission.enabled = args['transmission'] as bool;
   core.simulator.enabled = args['dynamic'] as bool;
-  Timer.periodic(const Duration(milliseconds: 200), (_) => core.simulator.tick(0.2));
+  Timer.periodic(
+    const Duration(milliseconds: 200),
+    (_) => core.simulator.tick(0.2),
+  );
 
   final tcp = TcpTransport(port: port);
   ElmSession? session;
-  String esc(List<int> b) => String.fromCharCodes(b).replaceAll('\r', r'\r').replaceAll('\n', r'\n');
+  String esc(List<int> b) =>
+      String.fromCharCodes(b).replaceAll('\r', r'\r').replaceAll('\n', r'\n');
 
   tcp.onConnection.listen((state) {
     stdout.writeln('conn $state');
@@ -58,7 +62,8 @@ Future<void> main(List<String> argv) async {
   await tcp.start();
   stdout.writeln('listening ${tcp.port}');
 
-  await for (final line in stdin.transform(utf8.decoder).transform(const LineSplitter())) {
+  await for (final line
+      in stdin.transform(utf8.decoder).transform(const LineSplitter())) {
     if (line.trim().isEmpty) continue;
     stdout.writeln(await applyControl(core, line, disconnect: tcp.disconnect));
   }

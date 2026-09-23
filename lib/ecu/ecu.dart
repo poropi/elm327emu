@@ -60,8 +60,14 @@ class Ecu implements BusNode {
         : profile.responseId11;
     final delay = profile.baseLatency + faults.extraDelay;
     if (faults.config.responsePending && !functional) {
-      _schedule(delay, () => _send(responseId, frame.extended, [0x7F, request[0], 0x78]));
-      _schedule(delay + pendingDelay, () => _send(responseId, frame.extended, response));
+      _schedule(
+        delay,
+        () => _send(responseId, frame.extended, [0x7F, request[0], 0x78]),
+      );
+      _schedule(
+        delay + pendingDelay,
+        () => _send(responseId, frame.extended, response),
+      );
     } else {
       _schedule(delay, () => _send(responseId, frame.extended, response));
     }
@@ -84,7 +90,9 @@ class Ecu implements BusNode {
     }
     final middle = f.id & 0x00FFFF00;
     if (middle == 0x00DB3300) return _Addressing.functional;
-    if (middle == (0x00DA0000 | (profile.address29 << 8))) return _Addressing.physical;
+    if (middle == (0x00DA0000 | (profile.address29 << 8))) {
+      return _Addressing.physical;
+    }
     return null;
   }
 
@@ -137,7 +145,10 @@ class Ecu implements BusNode {
   void _sendNextConsecutive() {
     _schedule(_gap, () {
       if (_remaining.isEmpty) return;
-      bus.transmit(CanFrame(_txId, _remaining.removeAt(0), extended: _txExtended), sender: this);
+      bus.transmit(
+        CanFrame(_txId, _remaining.removeAt(0), extended: _txExtended),
+        sender: this,
+      );
       if (_remaining.isEmpty) return;
       if (_blockLeft > 0) {
         _blockLeft--;
