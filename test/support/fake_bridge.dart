@@ -19,6 +19,9 @@ class FakeTransportBridge extends TransportBridge {
   /// テストで disconnect の失敗を再現するための例外（transport ごと）。
   final Map<TransportType, Object> disconnectErrors = {};
 
+  /// テストで startBle / startSpp の失敗を再現するための例外（transport ごと）。
+  final Map<TransportType, Object> startErrors = {};
+
   String sentText(TransportType t) => sent
       .where((e) => e.$1 == t)
       .map((e) => String.fromCharCodes(e.$2))
@@ -39,12 +42,21 @@ class FakeTransportBridge extends TransportBridge {
   Future<void> send(TransportType t, List<int> bytes) async =>
       sent.add((t, bytes));
   @override
-  Future<void> startBle({bool useFff0 = false}) async =>
-      calls.add('startBle:$useFff0');
+  Future<void> startBle({bool useFff0 = false}) async {
+    calls.add('startBle:$useFff0');
+    final e = startErrors[TransportType.ble];
+    if (e != null) throw e;
+  }
+
   @override
   Future<void> stopBle() async => calls.add('stopBle');
   @override
-  Future<void> startSpp() async => calls.add('startSpp');
+  Future<void> startSpp() async {
+    calls.add('startSpp');
+    final e = startErrors[TransportType.spp];
+    if (e != null) throw e;
+  }
+
   @override
   Future<void> stopSpp() async => calls.add('stopSpp');
   @override

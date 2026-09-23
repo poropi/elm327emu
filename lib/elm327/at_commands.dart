@@ -8,6 +8,21 @@ import 'elm_state.dart';
 const elmId = 'ELM327 v1.5';
 const elmDescription = 'OBDII to RS232 Interpreter';
 
+/// PP（Programmable Parameter）の既定値。ELM327DSJ p.69–73 の Programmable Parameter
+/// Summary の Default 列から写した。表にない番号（05・08・0B・1F・20・22・23・27）と、
+/// 既定が FF のものは載せない（PPS では FF と表示する）。
+/// PP 26（CAN の埋め草バイト）の既定が 00 なのも同じ表による（p.72。p.68 の本文にも
+/// 「ELM327 は既定で 00 を使う」とある）。p.68 の AT PPS の出力例は 17・1A・1B が表と違う
+/// （17:6D・1A:FF・1B:FF）が、既定値は表のほうに合わせた。
+const Map<int, int> ppDefaults = {
+  0x03: 0x32, 0x04: 0x01, 0x06: 0xF1, 0x07: 0x09, 0x09: 0x00, 0x0A: 0x0A, //
+  0x0C: 0x68, 0x0D: 0x0D, 0x0E: 0x9A, 0x0F: 0xD5, 0x10: 0x0D, 0x11: 0x00,
+  0x13: 0x55, 0x14: 0x50, 0x15: 0x0A, 0x17: 0x92, 0x18: 0x31, 0x19: 0x31,
+  0x1A: 0x0A, 0x1B: 0x0A, 0x1C: 0x03, 0x1D: 0x0F, 0x1E: 0x4A, 0x24: 0x00,
+  0x25: 0x00, 0x26: 0x00, 0x2A: 0x3C, 0x2B: 0x02, 0x2C: 0xE0, 0x2D: 0x04,
+  0x2E: 0x80, 0x2F: 0x0A,
+};
+
 /// AT コマンドの結果。
 sealed class AtOutcome {
   const AtOutcome();
@@ -159,9 +174,13 @@ class AtCommands {
         state.setProtocol(p, auto: p == 0, save: p != 0);
       }),
     ),
+    // SP Ah は SP hA とも書ける。SP A0 / SP 0A は保存しない（DSJ p.26）。
     _Rule(
-      'SPA([0-9A-C])',
-      (m, r) => _set(() => state.setProtocol(_h(m), auto: true, save: true)),
+      'SP(?:A([0-9A-C])|([0-9A-C])A)',
+      (m, r) => _set(() {
+        final p = int.parse(m.group(1) ?? m.group(2)!, radix: 16);
+        state.setProtocol(p, auto: true, save: p != 0);
+      }),
     ),
     _Rule(
       'TP([0-9A-C])',
@@ -266,7 +285,7 @@ class AtCommands {
 
   List<String> _ppSummary() {
     String item(int n) {
-      final value = state.ppValues[n] ?? (n == 0x26 ? 0x00 : 0xFF);
+      final value = state.ppValues[n] ?? ppDefaults[n] ?? 0xFF;
       return '${hex2(n)}:${hex2(value)} ${state.ppEnabled.contains(n) ? 'N' : 'F'}';
     }
 

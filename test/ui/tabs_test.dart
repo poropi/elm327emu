@@ -95,6 +95,60 @@ void main() {
     expect(find.text('DID は 16 進 4 桁'), findsOneWidget);
   });
 
+  testWidgets('ECU タブ: DID 行をタップすると既存の値で編集でき、削除もできる（最終レビュー M6）', (
+    tester,
+  ) async {
+    final (c, _) = await pumpHome(tester);
+    await openTab(tester, 'ECU');
+    await reveal(tester, find.text('F191'), EcuTab);
+    await tester.tap(find.text('F191'));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('did-id')))
+          .controller!
+          .text,
+      'F191',
+    );
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('did-value')))
+          .controller!
+          .text,
+      '0A 1B 2C 3D',
+    );
+    expect(find.text('HEX'), findsWidgets);
+    await tester.enterText(find.byKey(const Key('did-value')), 'FF 00');
+    await tester.tap(find.byKey(const Key('did-ok')));
+    await tester.pumpAndSettle();
+    expect(c.core.engine.dids[0xF191]!.bytes, [0xFF, 0x00]);
+    expect(c.core.engine.dids[0xF191]!.isAscii, isFalse);
+
+    await reveal(tester, find.text('F190'), EcuTab);
+    await tester.tap(find.text('F190'));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('did-value')))
+          .controller!
+          .text,
+      'WAUZZZ8K9AA000000',
+    );
+    await tester.enterText(
+      find.byKey(const Key('did-value')),
+      'JT2BF22K1W0123456',
+    );
+    await tester.tap(find.byKey(const Key('did-ok')));
+    await tester.pumpAndSettle();
+    expect(c.core.engine.dids[0xF190]!.display, 'JT2BF22K1W0123456');
+
+    await reveal(tester, find.byTooltip('F18C を削除'), EcuTab);
+    await tester.tap(find.byTooltip('F18C を削除'));
+    await tester.pump();
+    expect(c.core.engine.dids.containsKey(0xF18C), isFalse);
+    expect(find.text('F18C'), findsNothing);
+  });
+
   testWidgets('障害タブ: イグニッション・遅延の注意・エラー・切断ボタン', (tester) async {
     final (c, _) = await pumpHome(tester);
     await openTab(tester, '障害');

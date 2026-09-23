@@ -318,6 +318,14 @@ void main() {
       expect(h.send('010C'), '41 0C 0C 80 \r\r>');
       expect(h.send('ATCS'), 'T:01 R:00\r\r>');
     });
+    t('<RX ERROR は受信エラーとして CS の R を数える', (h, a) {
+      h.quiet();
+      h.faultConfig
+        ..error = ElmErrorKind.rxErrorMark
+        ..errorArmed = true;
+      expect(h.send('010C'), '41 0C 0C 80 <RX ERROR\r\r>');
+      expect(h.send('ATCS'), 'T:00 R:01\r\r>');
+    });
     t('エラー（常に）は解除するまで続く', (h, a) {
       h.quiet();
       h.faultConfig

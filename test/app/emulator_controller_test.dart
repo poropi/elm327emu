@@ -1,11 +1,26 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:elm327emu/app/emulator_controller.dart';
 import 'package:elm327emu/can/fault_injector.dart';
 import 'package:elm327emu/ecu/ecu_profile.dart';
+import 'package:elm327emu/transport/tcp_transport.dart';
 import 'package:elm327emu/transport/transport.dart';
 import '../support/fake_bridge.dart';
+
+/// ソケットを開かず、接続イベントだけをテストから流す TcpTransport。
+class _FakeTcp extends TcpTransport {
+  final events = StreamController<String>.broadcast(sync: true);
+  @override
+  Stream<String> get onConnection => events.stream;
+  @override
+  Future<void> start() async {}
+  @override
+  Future<void> stop() async {}
+}
 
 void main() {
   (EmulatorController, FakeTransportBridge) make(FakeAsync async) {
@@ -219,6 +234,75 @@ void main() {
       ));
       expect(c.connState.containsKey(TransportType.ble), isFalse);
       c.dispose();
+    });
+  });
+
+  group('接続の開始・TCP のエラー（最終レビュー M5）', () {
+    test('startBle / startSpp の例外は捕まえて、ログと接続状態に出す', () {
+      fakeAsync((async) {
+        final (c, b) = make(async);
+        b.startErrors[TransportType.ble] = PlatformException(
+          code: 'unavailable',
+          message: 'Bluetooth OFF',
+        );
+        b.startErrors[TransportType.spp] = MissingPluginException('spp');
+        c.startBle();
+        c.startSpp();
+        async.flushMicrotasks();
+        expect(c.statusText(TransportType.ble), startsWith('エラー'));
+        expect(c.statusText(TransportType.spp), startsWith('エラー'));
+        final infos = c.log
+            .where((e) => e.kind == LogKind.info)
+            .map((e) => e.text);
+        expect(
+          infos.any((t) => t.contains('BLE') && t.contains('Bluetooth OFF')),
+          isTrue,
+        );
+        expect(
+          infos.any((t) => t.contains('SPP') && t.contains('spp')),
+          isTrue,
+        );
+        c.dispose();
+      });
+    });
+
+    test('TCP のポートが使用中なら、例外にせずログと接続状態に出す', () async {
+      final busy = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+      final c = EmulatorController(
+        bridge: FakeTransportBridge(),
+        tcp: TcpTransport(port: busy.port),
+        tcpAvailable: true,
+      );
+      await c.startTcp();
+      expect(c.statusText(TransportType.tcp), startsWith('エラー'));
+      expect(
+        c.log.where((e) => e.kind == LogKind.info).last.text,
+        contains('TCP'),
+      );
+      c.dispose();
+      await busy.close();
+    });
+
+    test('TCP の error イベントは待ち受け中に戻さず、エラーとして info ログに出す', () {
+      fakeAsync((async) {
+        final tcp = _FakeTcp();
+        final c = EmulatorController(
+          bridge: FakeTransportBridge(),
+          tcp: tcp,
+          tcpAvailable: true,
+        );
+        c.init();
+        async.flushMicrotasks();
+        c.startTcp();
+        async.flushMicrotasks();
+        tcp.events.add('connected 127.0.0.1:50000');
+        expect(c.statusText(TransportType.tcp), '接続中 · 127.0.0.1:50000');
+        tcp.events.add('error SocketException: accept failed');
+        expect(c.statusText(TransportType.tcp), '接続中 · 127.0.0.1:50000');
+        expect(c.log.last.kind, LogKind.info);
+        expect(c.log.last.text, contains('SocketException: accept failed'));
+        c.dispose();
+      });
     });
   });
 }

@@ -36,14 +36,16 @@ class EmulatorController extends ChangeNotifier {
   EmulatorController({
     TransportBridge? bridge,
     EmulationCore? core,
+    TcpTransport? tcp,
     bool? tcpAvailable,
   }) : bridge = bridge ?? TransportBridge(),
        core = core ?? EmulationCore(),
+       tcp = tcp ?? TcpTransport(),
        _tcpAvailable = tcpAvailable ?? (!kIsWeb && Platform.isMacOS);
 
   final EmulationCore core;
   final TransportBridge bridge;
-  final TcpTransport tcp = TcpTransport();
+  final TcpTransport tcp;
   final bool _tcpAvailable;
 
   static const maxLog = 2000;
@@ -93,11 +95,11 @@ class EmulatorController extends ChangeNotifier {
       ..add(tcp.onReceive.listen((b) => _receive(TransportType.tcp, b)))
       ..add(
         tcp.onConnection.listen((s) {
-          final parts = s.split(' ');
+          final space = s.indexOf(' ');
           _onConnection(
             TransportType.tcp,
-            parts.first,
-            parts.length > 1 ? parts[1] : '',
+            space < 0 ? s : s.substring(0, space),
+            space < 0 ? '' : s.substring(space + 1),
           );
         }),
       );
@@ -129,6 +131,11 @@ class EmulatorController extends ChangeNotifier {
   }
 
   void _onConnection(TransportType t, String state, String device) {
+    if (state == 'error') {
+      // 待ち受けソケットのエラー。接続状態は変えずにログに残す。
+      _log(LogKind.info, '[${t.label}] エラー: $device');
+      return;
+    }
     if (state == 'connected') {
       connState[t] = device.isEmpty ? '接続中' : '接続中 · $device';
     } else {
@@ -143,9 +150,7 @@ class EmulatorController extends ChangeNotifier {
   }
 
   bool _isDiagnostic(int id, bool extended) =>
-      extended ||
-      (id >= 0x7DF && id <= 0x7EF) ||
-      !PeriodicTraffic.ids.contains(id);
+      extended || !PeriodicTraffic.ids.contains(id);
 
   void _onBus(BusEvent e) {
     final f = e.frame;
@@ -169,11 +174,21 @@ class EmulatorController extends ChangeNotifier {
   }
 
   // ---- 接続 ----
-  Future<void> startBle() async {
-    await bridge.startBle(useFff0: useFff0);
-    connState[TransportType.ble] = '待ち受け中';
+  /// 待ち受けを始める。失敗（Bluetooth OFF・ポート使用中など）は例外にせず、
+  /// ログと接続状態に出す。
+  Future<void> _start(TransportType t, Future<void> Function() start) async {
+    try {
+      await start();
+      connState[t] = '待ち受け中';
+    } on Object catch (e) {
+      connState[t] = 'エラー（ログを参照）';
+      _log(LogKind.info, '${t.label} の開始に失敗: $e');
+    }
     notifyListeners();
   }
+
+  Future<void> startBle() =>
+      _start(TransportType.ble, () => bridge.startBle(useFff0: useFff0));
 
   Future<void> stopBle() async {
     await bridge.stopBle();
@@ -182,11 +197,7 @@ class EmulatorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> startSpp() async {
-    await bridge.startSpp();
-    connState[TransportType.spp] = '待ち受け中';
-    notifyListeners();
-  }
+  Future<void> startSpp() => _start(TransportType.spp, bridge.startSpp);
 
   Future<void> stopSpp() async {
     await bridge.stopSpp();
@@ -195,11 +206,7 @@ class EmulatorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> startTcp() async {
-    await tcp.start();
-    connState[TransportType.tcp] = '待ち受け中';
-    notifyListeners();
-  }
+  Future<void> startTcp() => _start(TransportType.tcp, tcp.start);
 
   Future<void> stopTcp() async {
     await tcp.stop();

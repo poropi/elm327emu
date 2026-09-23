@@ -55,6 +55,20 @@ class _EcuTabState extends State<EcuTab> {
     });
   }
 
+  /// DID の追加ダイアログ。[did] を渡すと既存の値を入れて開き、保存で上書きする。
+  Future<void> _openDid(
+    EmulatorController c,
+    EcuProfile e, [
+    int? did,
+    DidValue? value,
+  ]) async {
+    final r = await showDialog<(int, DidValue)>(
+      context: context,
+      builder: (_) => _DidDialog(did: did, value: value),
+    );
+    if (r != null) c.setDid(e, r.$1, r.$2);
+  }
+
   Widget _field(
     String label,
     TextEditingController ctrl,
@@ -146,35 +160,39 @@ class _EcuTabState extends State<EcuTab> {
           title: 'Mode 22 の DID',
           children: [
             for (final entry in dids)
-              Row(
-                children: [
-                  SizedBox(
-                    width: 52,
-                    child: Text(
-                      hexN(entry.key, 4),
-                      style: monoStyle.copyWith(color: AppColors.teal),
+              InkWell(
+                key: Key('did-row-${hexN(entry.key, 4)}'),
+                onTap: () => _openDid(c, e, entry.key, entry.value),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 52,
+                      child: Text(
+                        hexN(entry.key, 4),
+                        style: monoStyle.copyWith(color: AppColors.teal),
+                      ),
                     ),
-                  ),
-                  SizedBox(
-                    width: 54,
-                    child: Text(
-                      entry.value.isAscii ? 'ASCII' : 'HEX',
-                      style: captionStyle,
+                    SizedBox(
+                      width: 54,
+                      child: Text(
+                        entry.value.isAscii ? 'ASCII' : 'HEX',
+                        style: captionStyle,
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      entry.value.display,
-                      style: monoStyle,
-                      overflow: TextOverflow.ellipsis,
+                    Expanded(
+                      child: Text(
+                        entry.value.display,
+                        style: monoStyle,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    tooltip: '${hexN(entry.key, 4)} を削除',
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () => c.removeDid(e, entry.key),
-                  ),
-                ],
+                    IconButton(
+                      tooltip: '${hexN(entry.key, 4)} を削除',
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: () => c.removeDid(e, entry.key),
+                    ),
+                  ],
+                ),
               ),
             Row(
               children: [
@@ -186,13 +204,7 @@ class _EcuTabState extends State<EcuTab> {
                 ),
                 FilledButton.tonal(
                   key: const Key('did-add'),
-                  onPressed: () async {
-                    final r = await showDialog<(int, DidValue)>(
-                      context: context,
-                      builder: (_) => const _DidDialog(),
-                    );
-                    if (r != null) c.setDid(e, r.$1, r.$2);
-                  },
+                  onPressed: () => _openDid(c, e),
                   child: const Text('DID を追加'),
                 ),
               ],
@@ -205,7 +217,11 @@ class _EcuTabState extends State<EcuTab> {
 }
 
 class _DidDialog extends StatefulWidget {
-  const _DidDialog();
+  const _DidDialog({this.did, this.value});
+
+  /// 編集するときの既存の DID と値（追加のときは null）。
+  final int? did;
+  final DidValue? value;
 
   @override
   State<_DidDialog> createState() => _DidDialogState();
@@ -219,6 +235,20 @@ class _DidDialogState extends State<_DidDialog> {
   final _value = TextEditingController();
   bool _ascii = true;
   String? _error;
+
+  bool get _editing => widget.did != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final did = widget.did;
+    final value = widget.value;
+    if (did != null) _did.text = hexN(did, 4);
+    if (value != null) {
+      _ascii = value.isAscii;
+      _value.text = value.display;
+    }
+  }
 
   @override
   void dispose() {
@@ -254,7 +284,7 @@ class _DidDialogState extends State<_DidDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('DID を追加'),
+      title: Text(_editing ? 'DID を編集' : 'DID を追加'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -302,7 +332,7 @@ class _DidDialogState extends State<_DidDialog> {
         FilledButton(
           key: const Key('did-ok'),
           onPressed: _submit,
-          child: const Text('追加'),
+          child: Text(_editing ? '保存' : '追加'),
         ),
       ],
     );

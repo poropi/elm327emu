@@ -118,13 +118,29 @@ void main() {
       ok('PP0CON');
       final lines = reply('PPS');
       expect(lines.length, 12);
-      expect(lines.first, '00:FF F  01:FF F  02:FF F  03:FF F');
-      expect(lines[3], '0C:68 N  0D:FF F  0E:FF F  0F:FF F');
-      expect(lines[9].startsWith('24:FF F  25:FF F  26:00 F'), isTrue);
+      expect(lines.first, '00:FF F  01:FF F  02:FF F  03:32 F');
+      expect(lines[3], '0C:68 N  0D:0D F  0E:9A F  0F:D5 F');
+      expect(lines[9], '24:00 F  25:00 F  26:00 F  27:FF F');
       ok('PPFFON');
       expect(s.ppEnabled.length, 0x30);
       ok('PP0COFF');
       expect(s.ppEnabled.contains(0x0C), isFalse);
+    });
+    test('PPS の既定値はデータシート（DSJ p.69–73）の PP 表どおり', () {
+      expect(reply('PPS'), [
+        '00:FF F  01:FF F  02:FF F  03:32 F',
+        '04:01 F  05:FF F  06:F1 F  07:09 F',
+        '08:FF F  09:00 F  0A:0A F  0B:FF F',
+        '0C:68 F  0D:0D F  0E:9A F  0F:D5 F',
+        '10:0D F  11:00 F  12:FF F  13:55 F',
+        '14:50 F  15:0A F  16:FF F  17:92 F',
+        '18:31 F  19:31 F  1A:0A F  1B:0A F',
+        '1C:03 F  1D:0F F  1E:4A F  1F:FF F',
+        '20:FF F  21:FF F  22:FF F  23:FF F',
+        '24:00 F  25:00 F  26:00 F  27:FF F',
+        '28:FF F  29:FF F  2A:3C F  2B:02 F',
+        '2C:E0 F  2D:04 F  2E:80 F  2F:0A F',
+      ]);
     });
     test('RV は車両電圧、CV で補正、CV 0000 で解除', () {
       expect(reply('RV'), ['12.4V']);
@@ -230,6 +246,22 @@ void main() {
       expect(s.autoSearch, isTrue);
       q('SP');
       q('SPD');
+    });
+    test('SP hA は SP Ah と同じ、SP A0 / SP 0A は保存しない（DSJ p.26）', () {
+      ok('SP6A');
+      expect(s.protocol, 6);
+      expect(s.autoSearch, isTrue);
+      expect(s.storedProtocol, 6);
+      expect(s.storedAuto, isTrue);
+      ok('SP7');
+      ok('SPA0');
+      expect(s.protocol, 0);
+      expect(s.autoSearch, isTrue);
+      expect(s.storedProtocol, 7);
+      ok('SP0A');
+      expect(s.protocol, 0);
+      expect(s.storedProtocol, 7);
+      expect(s.storedAuto, isFalse);
     });
     test('ST は ×4ms、00 は初期値', () {
       ok('ST19');

@@ -111,7 +111,7 @@ class Ecu implements BusNode {
       return null;
     }
     final middle = f.id & 0x00FFFF00;
-    if (middle == 0x00DB3300) return _Addressing.functional;
+    if (middle == functionalId29 & 0x00FFFF00) return _Addressing.functional;
     if (middle == (0x00DA0000 | (profile.address29 << 8))) {
       return _Addressing.physical;
     }

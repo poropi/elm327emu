@@ -195,7 +195,12 @@ class ElmSession {
 
     final error = faults.takeError();
     if (error != null) {
-      state.txErrors++;
+      // <RX ERROR は受信側のエラー、それ以外は送信側として ATCS の T / R に数える。
+      if (error == ElmErrorKind.rxErrorMark) {
+        state.rxErrors++;
+      } else {
+        state.txErrors++;
+      }
       if (!error.isMark) {
         if (error.resetsState) state.reset();
         _finish([error.text]);

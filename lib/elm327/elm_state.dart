@@ -1,4 +1,5 @@
 import '../can/can_frame.dart';
+import '../ecu/ecu_profile.dart';
 
 enum AdaptiveTiming { off, auto1, auto2 }
 
@@ -140,7 +141,7 @@ class ElmState {
   int get txId {
     final h = header;
     if (is29bit) {
-      final low = h ?? (0xDB3300 | testerAddress);
+      final low = h ?? ((functionalId29 & 0xFFFF00) | testerAddress);
       return ((priority29 & 0x1F) << 24) | (low & 0xFFFFFF);
     }
     return h == null ? 0x7DF : h & 0x7FF;
