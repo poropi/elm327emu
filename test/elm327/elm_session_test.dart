@@ -2,6 +2,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:test/test.dart';
 import 'package:elm327emu/can/fault_injector.dart';
 import 'package:elm327emu/can/iso_tp.dart';
+import 'package:elm327emu/can/periodic_traffic.dart';
 import 'package:elm327emu/elm327/elm_session.dart';
 import '../support/elm_harness.dart';
 
@@ -381,5 +382,71 @@ void main() {
       h.sendRaw('X', elapse: const Duration(milliseconds: 1)),
       'STOPPED\r\r>',
     );
+  });
+
+  group('周期フレームと受信フィルタ（最終レビュー I1・I2）', () {
+    PeriodicTraffic traffic(ElmHarness h) =>
+        PeriodicTraffic(h.bus, h.vehicle, h.faults)..start();
+
+    t('RA C9 で待ち中に 0C9 が FF・CF の形になっても例外にならない（crash2）', (h, a) {
+      final p = traffic(h);
+      h.vehicle.rpm = 1024; // 0C9 の先頭 2 バイトが 10 00（宣言長 0 の FF）
+      h.send('ATE0');
+      h.send('ATSP6');
+      h.send('ATRAC9');
+      h.send('ATSTFF');
+      h.sendRaw('0100\r', elapse: const Duration(milliseconds: 150));
+      h.vehicle.rpm = 2112; // 21 00（連番 1 の CF）
+      final out = h.sendRaw('', elapse: const Duration(milliseconds: 1200));
+      expect(out, endsWith('>'));
+      expect(h.session.mode, SessionMode.idle);
+      p.stop();
+    });
+
+    for (final headers in [false, true]) {
+      final hn = headers ? 'H1' : 'H0';
+      t('$hn: CF000 + CM000 でも周期フレームを応答に数えず 0100 が返る', (h, a) {
+        final p = traffic(h);
+        h.vehicle.rpm = 2112;
+        h.send('ATE0');
+        h.send('ATSP6');
+        h.send(headers ? 'ATH1' : 'ATH0');
+        h.send('ATCF000');
+        h.send('ATCM000');
+        final d = timed(
+          a,
+          () => expect(
+            h.send('0100'),
+            headers
+                ? '7E8 06 41 00 BE 3F A0 13 00 \r\r>'
+                : '41 00 BE 3F A0 13 \r\r>',
+          ),
+        );
+        expect(d.inMilliseconds, inInclusiveRange(58, 60));
+        p.stop();
+      });
+      for (final filter in ['ATCRA0C9', 'ATRAC9']) {
+        t('$hn: $filter では 7E8 がフィルタで落ち、ST ちょうどで NO DATA', (h, a) {
+          final p = traffic(h);
+          h.send('ATE0');
+          h.send('ATSP6');
+          h.send(headers ? 'ATH1' : 'ATH0');
+          h.send(filter);
+          final d = timed(a, () => expect(h.send('0100'), 'NO DATA\r\r>'));
+          expect(d.inMilliseconds, inInclusiveRange(200, 202));
+          p.stop();
+        });
+      }
+    }
+
+    t('監視中は周期フレームを従来どおり表示する', (h, a) {
+      final p = traffic(h);
+      h.send('ATE0');
+      h.send('ATSP6');
+      h.send('ATH1');
+      final out = h.sendRaw('ATMA\r', elapse: const Duration(milliseconds: 25));
+      expect(out, contains('0C9 '));
+      p.stop();
+    });
   });
 }

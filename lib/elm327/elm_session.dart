@@ -5,6 +5,7 @@ import 'package:clock/clock.dart';
 import '../can/can_frame.dart';
 import '../can/fault_injector.dart';
 import '../can/iso_tp.dart';
+import '../can/periodic_traffic.dart';
 import '../can/virtual_can_bus.dart';
 import '../util/hex.dart';
 import 'at_commands.dart';
@@ -244,18 +245,24 @@ class ElmSession {
     }
     final p = _pending;
     if (_mode != SessionMode.busy || p == null) return;
+    // 周期フレームは応答の収集にも待ち時間の再設定にも使わない（監視では表示する）。
+    if (e.sender is PeriodicTraffic) return;
     if (p.dropped || !state.acceptsResponse(f)) return;
+    final lines = formatter.frameLines(f);
+    final reassembler = p.reassemblerFor(f.id);
+    final message = reassembler.add(f.data);
+    // 表示行にも ISO-TP の組み立てにもならなかったフレームでは待ち時間を延ばさない。
+    if (lines.isEmpty && !reassembler.advanced) return;
     state
       ..lastFrame = f
       ..lastActivity = clock.now();
-    p.lines.addAll(formatter.frameLines(f));
+    p.lines.addAll(lines);
     if (frameType(f.data) == FrameType.first && state.autoFlowControl) {
       bus.transmit(
         CanFrame(_flowControlId(f), flowControl(), extended: f.extended),
         sender: this,
       );
     }
-    final message = p.reassemblerFor(f.id).add(f.data);
     if (message != null) {
       if (message.length == 3 && message[0] == 0x7F && message[2] == 0x78) {
         _arm(pendingWait); // 応答保留（未確認 4）

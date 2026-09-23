@@ -46,7 +46,10 @@ FrameType frameType(List<int> data) {
           ? FrameType.single
           : FrameType.invalid;
     case 1:
-      return data.length >= 3 ? FrameType.first : FrameType.invalid;
+      // 宣言長 7 以下は SF で送れる長さなので FF としては不正（ISO 15765-2）。
+      if (data.length < 3) return FrameType.invalid;
+      final declared = ((data[0] & 0x0F) << 8) | data[1];
+      return declared >= 8 ? FrameType.first : FrameType.invalid;
     case 2:
       return FrameType.consecutive;
     case 3:
@@ -64,10 +67,16 @@ class Reassembler {
 
   bool get inProgress => _total != null;
 
+  /// 直前の [add] がメッセージの組み立てを進めたか（SF・FF・連番の合った CF）。
+  bool get advanced => _advanced;
+  bool _advanced = false;
+
   /// フレームのデータを入れる。メッセージが完成したらペイロードを返す。
   List<int>? add(List<int> data) {
+    _advanced = false;
     switch (frameType(data)) {
       case FrameType.single:
+        _advanced = true;
         _reset();
         final n = data[0] & 0x0F;
         return data.sublist(1, 1 + n);
@@ -77,6 +86,7 @@ class Reassembler {
           ..clear()
           ..addAll(data.sublist(2));
         _nextSeq = 1;
+        _advanced = true;
         return null;
       case FrameType.consecutive:
         final total = _total;
@@ -86,8 +96,10 @@ class Reassembler {
           return null;
         }
         _nextSeq++;
+        _advanced = true;
         final remaining = total - _buf.length;
-        final take = remaining < data.length - 1 ? remaining : data.length - 1;
+        final room = data.length - 1;
+        final take = (remaining < room ? remaining : room).clamp(0, room);
         _buf.addAll(data.sublist(1, 1 + take));
         if (_buf.length >= total) {
           final message = List<int>.of(_buf);

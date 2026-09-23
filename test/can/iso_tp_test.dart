@@ -100,5 +100,14 @@ void main() {
         expect(out, payload, reason: 'length $n');
       }
     });
+    test('宣言長 7 以下の FF は不正扱い、続く CF で例外にならない', () {
+      expect(frameType([0x10, 0x04, 1, 2, 3, 4, 5, 6]), FrameType.invalid);
+      expect(frameType([0x10, 0x07, 1, 2, 3, 4, 5, 6]), FrameType.invalid);
+      expect(frameType([0x10, 0x08, 1, 2, 3, 4, 5, 6]), FrameType.first);
+      final r = Reassembler();
+      expect(r.add([0x10, 0x04, 1, 2, 3, 4, 5, 6]), isNull);
+      expect(r.inProgress, isFalse);
+      expect(r.add([0x21, 9, 9, 9, 9, 9, 9, 9]), isNull);
+    });
   });
 }
