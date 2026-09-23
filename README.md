@@ -1,7 +1,8 @@
 # ELM327 エミュレータ
 
 ELM327 OBD-II アダプタのソフトウェアエミュレータ。自作 OBD クライアントの開発・テスト用。
-仮想 CAN バス上の ECU 2 台（エンジン・トランスミッション）、AT コマンド全項目、障害注入を備える。
+仮想 CAN バス上の ECU 2 台（エンジン・トランスミッション）、ELM327 データシート（v2.0 DSI）の AT コマンド一覧の全項目、障害注入を備える。
+ただし DSJ 版の要約表にある `CTM1` / `CTM5` は `?` を返す。
 
 - **Android**: BLE + Classic SPP の両方に対応
 - **macOS**: BLE のみ（Classic SPP 不可）。開発用に TCP でも待ち受けられる
@@ -132,6 +133,7 @@ transmission on|off / rpm <n> / speed <n> / dtc add <code> / dtc clear / disconn
 - macOS の切断は疑似的（サービスを登録し直してクライアントを切る）。
 - iOS は非対応（BLE ペリフェラルロールの制限）。
 - BLE 接続は 1 クライアントのみ同時接続を想定。
+- 応答待ち中に遅れて届いた前の要求への応答は、次の要求の応答に混ざることがある（実機の ELM327 もフィルタを通ったフレームは表示する、という前提。未確認）。
 - 未確認の前提がある: [設計書 §1「未確認の前提」](docs/superpowers/specs/2026-09-23-elm327-full-emulation-design.md#未確認の前提実装で仮置きし報告で明記する) の 1〜6、[計画「設計書からの変更点」](docs/superpowers/plans/2026-09-23-elm327-full-emulation.md#設計書からの変更点データシート実クライアントで確かめた結果) の 3・8・9。
 - Mode 06 の TID・単位 ID は SAE J1979 と照合していない。
 
