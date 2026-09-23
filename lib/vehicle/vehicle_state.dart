@@ -1,42 +1,42 @@
 /// エミュレートする車両の現在状態。Simulator または UI が更新する。
 class VehicleState {
-  int rpm;
-  double speedKmh;
-  double coolantTempC;
-  double engineLoadPct;
-  double throttlePct;
-  double intakeTempC;
-  double maf; // g/s
-  double fuelLevelPct;
-  double batteryVoltage;
-  List<String> dtcs;
-  String vin;
+  int rpm = 800;
+  double speedKmh = 0;
+  double coolantTempC = 85;
+  double engineLoadPct = 20;
+  double throttlePct = 12;
+  double intakeTempC = 30;
+  double maf = 3.5; // g/s
+  double fuelLevelPct = 70;
+  double batteryVoltage = 12.4;
+  double stftPct = 1.6; // 短期燃料トリム B1
+  double ltftPct = -0.8; // 長期燃料トリム B1
+  double mapKpa = 33; // 吸気管圧力
+  double timingDeg = 10; // 点火時期
+  double baroKpa = 101;
+  double ambientTempC = 22;
+  double oilTempC = 90;
+  double fuelRateLph = 0.8;
+  double catalystTempC = 420;
+  double lambda = 1.0;
+  double acceleratorPct = 10;
+  double absLoadPct = 18;
+  double runTimeSec = 0; // エンジン始動後の経過時間
+  double odometerKm = 48213.4;
+  double distanceSinceClearKm = 0;
+  double distanceWithMilKm = 0;
+  double secondsSinceClear = 0;
+  double secondsWithMil = 0;
+  int warmupsSinceClear = 0;
 
-  VehicleState({
-    required this.rpm,
-    required this.speedKmh,
-    required this.coolantTempC,
-    required this.engineLoadPct,
-    required this.throttlePct,
-    required this.intakeTempC,
-    required this.maf,
-    required this.fuelLevelPct,
-    required this.batteryVoltage,
-    required this.dtcs,
-    required this.vin,
-  });
+  /// レディネスの未完了ビット（0101 の D バイト。ビットの意味は C バイトと同じ）。
+  int readinessIncomplete = 0;
 
-  factory VehicleState.defaults() => VehicleState(
-        rpm: 800,
-        speedKmh: 0,
-        coolantTempC: 85,
-        engineLoadPct: 20,
-        throttlePct: 12,
-        intakeTempC: 30,
-        maf: 3.5,
-        fuelLevelPct: 70,
-        batteryVoltage: 12.4,
-        dtcs: ['P0301'],
-        vin: 'WAUZZZ8K9AA000000',
-      );
+  // 旧エンジン（Elm327Engine）用。Task 13 で削除する。
+  List<String> dtcs = ['P0301'];
+  String vin = 'WAUZZZ8K9AA000000';
+
+  VehicleState();
+
+  factory VehicleState.defaults() => VehicleState();
 }
