@@ -11,7 +11,5 @@ void main() {
     expect(v.odometerKm, 48213.4);
     expect(v.readinessIncomplete, 0);
     expect(v.warmupsSinceClear, 0);
-    expect(v.vin.length, 17);
-    expect(v.dtcs, ['P0301']);
   });
 }

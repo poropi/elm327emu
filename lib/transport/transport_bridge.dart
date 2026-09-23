@@ -24,6 +24,10 @@ class TransportBridge {
   Future<void> startSpp() => _control.invokeMethod('startSpp');
   Future<void> stopSpp() => _control.invokeMethod('stopSpp');
 
+  /// 接続中の相手だけ切る（待ち受けは続ける）。macOS の BLE は疑似切断。
+  Future<void> disconnect(TransportType t) =>
+      _control.invokeMethod('disconnect', {'transport': t.wire});
+
   Future<void> send(TransportType t, List<int> bytes) => _control.invokeMethod(
       'send', {'transport': t.wire, 'bytes': Uint8List.fromList(bytes)});
 

@@ -23,13 +23,10 @@ class _DtcEditorState extends State<DtcEditor> {
       const Text('DTCs', style: TextStyle(fontWeight: FontWeight.bold)),
       Wrap(
         spacing: 8,
-        children: c.vehicle.dtcs
+        children: c.core.engine.confirmedDtcs
             .map((d) => Chip(
                   label: Text(d),
-                  onDeleted: () {
-                    c.vehicle.dtcs.remove(d);
-                    c.notify();
-                  },
+                  onDeleted: () => c.removeDtc(c.core.engine, DtcKind.confirmed, d),
                 ))
             .toList(),
       ),
@@ -44,11 +41,7 @@ class _DtcEditorState extends State<DtcEditor> {
         TextButton(
           onPressed: () {
             final t = _ctrl.text.trim().toUpperCase();
-            if (RegExp(r'^[PCBU][0-9A-F]{4}$').hasMatch(t)) {
-              c.vehicle.dtcs.add(t);
-              _ctrl.clear();
-              c.notify();
-            }
+            if (c.addDtc(c.core.engine, DtcKind.confirmed, t)) _ctrl.clear();
           },
           child: const Text('追加'),
         ),

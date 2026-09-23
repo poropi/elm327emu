@@ -62,7 +62,7 @@ class HomePage extends StatelessWidget {
           child: ListView(
             reverse: true,
             children: c.log.reversed
-                .map((l) => Text(l, style: const TextStyle(fontFamily: 'monospace', fontSize: 12)))
+                .map((l) => Text('${l.kind.name} ${l.text}', style: const TextStyle(fontFamily: 'monospace', fontSize: 12)))
                 .toList(),
           ),
         ),

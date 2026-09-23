@@ -32,10 +32,6 @@ class VehicleState {
   /// レディネスの未完了ビット（0101 の D バイト。ビットの意味は C バイトと同じ）。
   int readinessIncomplete = 0;
 
-  // 旧エンジン（Elm327Engine）用。Task 13 で削除する。
-  List<String> dtcs = ['P0301'];
-  String vin = 'WAUZZZ8K9AA000000';
-
   VehicleState();
 
   factory VehicleState.defaults() => VehicleState();
