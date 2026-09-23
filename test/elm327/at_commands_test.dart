@@ -268,8 +268,12 @@ void main() {
       q('FCSD');
       ok('FCSH18DA10F1');
     });
-    test('PB は OK、RTR は AtRtr', () {
+    test('PB は値を保持して OK、AT D で消える、RTR は AtRtr', () {
       ok('PBC001');
+      expect(s.protocolB, [0xC0, 0x01]);
+      q('PBC0');
+      ok('D');
+      expect(s.protocolB, isNull);
       expect(at.handle('RTR'), isA<AtRtr>());
     });
   });

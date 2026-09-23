@@ -161,7 +161,10 @@ class AtCommands {
             for (var i = 0; i < s.length; i += 2) int.parse(s.substring(i, i + 2), radix: 16),
           ];
         })),
-    _Rule('PB$_hx{2}$_hx{2}', (m, r) => _ok),
+    _Rule('PB($_hx{2})($_hx{2})', (m, r) => _set(() => state.protocolB = [
+          int.parse(m.group(1)!, radix: 16),
+          int.parse(m.group(2)!, radix: 16),
+        ])),
     _Rule('RTR', (m, r) => const AtRtr()),
     _Rule('V([01])', (m, r) => _set(() => state.variableDlc = _b(m))),
     // ---- J1850 / ISO / J1939（CAN 以外）: 設定は受け付け、実行は ? ----

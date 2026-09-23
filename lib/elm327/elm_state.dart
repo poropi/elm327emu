@@ -38,6 +38,8 @@ class ElmState {
   late int flowMode;
   int? flowHeader;
   List<int>? flowData;
+  /// PB xx yy（プロトコル B のオプションとボーレート）。受け付けて保持するだけ。
+  List<int>? protocolB;
 
   // ---- 電源を切っても残るもの（EEPROM 相当） ----
   int storedProtocol = 0;
@@ -85,6 +87,7 @@ class ElmState {
     flowMode = 0;
     flowHeader = null;
     flowData = null;
+    protocolB = null;
   }
 
   /// AT Z / AT WS。電源を入れ直したのと同じ。
