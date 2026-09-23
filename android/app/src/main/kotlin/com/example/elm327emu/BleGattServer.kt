@@ -130,6 +130,16 @@ class BleGattServer(
         }
     }
 
+    /** 接続中のセントラルだけ切る。GATT サーバと広告は続ける。 */
+    fun disconnect() {
+        val d = device ?: return
+        synchronized(pending) {
+            pending.clear()
+            sending = false
+        }
+        gattServer?.cancelConnection(d)
+    }
+
     fun stop() {
         synchronized(pending) {
             pending.clear()

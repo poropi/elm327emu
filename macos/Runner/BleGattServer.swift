@@ -101,6 +101,18 @@ class BleGattServer: NSObject, CBPeripheralManagerDelegate {
         pending = []
     }
 
+    /// 疑似切断。CoreBluetooth のペリフェラル側には相手を切る API がないため、
+    /// サービスを外して広告を止め、0.5 秒後に登録し直す。相手からは「サービスが無効になった」と見える。
+    func disconnect() {
+        let fff0 = useFff0
+        let id = central?.identifier.uuidString ?? ""
+        stop()
+        onConn("disconnected", id)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.start(useFff0: fff0)
+        }
+    }
+
     func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
         if peripheral.state == .poweredOn && pendingStart { setup() }
     }

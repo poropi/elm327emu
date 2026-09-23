@@ -37,6 +37,9 @@ class Elm327Plugin: NSObject, FlutterStreamHandler {
                     self.ble?.send(data.data)
                 }
                 result(nil)
+            case "disconnect":
+                self.ble?.disconnect()
+                result(nil)
             default:
                 result(FlutterMethodNotImplemented)
             }

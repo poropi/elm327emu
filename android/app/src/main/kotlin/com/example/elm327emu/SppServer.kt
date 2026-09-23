@@ -61,6 +61,12 @@ class SppServer(
         } catch (_: Exception) {}
     }
 
+    /** 接続中のクライアントだけ切る。readLoop が抜けて accept に戻るので待ち受けは続く。 */
+    fun disconnect() {
+        try { socket?.close() } catch (_: Exception) {}
+        socket = null
+    }
+
     fun stop() {
         running = false
         try { socket?.close() } catch (_: Exception) {}
