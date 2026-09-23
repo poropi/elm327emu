@@ -51,6 +51,15 @@ void main() {
         ['18 DA F1 10 04 41 0C 21 98 00 00 00 ']);
   });
 
+  test('S0 + 29bit ヘッダは区切りなしで 8 桁連続', () {
+    s
+      ..headers = true
+      ..spaces = false
+      ..setProtocol(7, auto: false, save: false);
+    expect(fmt.frameLines(sf([0x41, 0x0C, 0x21, 0x98], id: 0x18DAF110, ext: true)),
+        ['18DAF11004410C2198000000']);
+  });
+
   test('H0 CAF0: PCI とパディングも表示', () {
     s.caf = false;
     expect(fmt.frameLines(sf([0x41, 0x0C, 0x21, 0x98])), ['04 41 0C 21 98 00 00 00 ']);
@@ -105,6 +114,11 @@ void main() {
     s.headers = true;
     expect(fmt.frameLines(CanFrame(0x7E0, flowControl()), monitor: true),
         ['7E0 FC: 30 00 00 00 00 00 00 00 ']);
+  });
+
+  test('監視中 H0: ID は出さず FC: 付きで生の 8 バイト', () {
+    expect(fmt.frameLines(CanFrame(0x7E0, flowControl()), monitor: true),
+        ['FC: 30 00 00 00 00 00 00 00 ']);
   });
 
   test('RTR: CAF1 かつ H0 では出さない、H1 なら ID と RTR（p.45）', () {

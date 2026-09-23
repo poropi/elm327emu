@@ -13,7 +13,9 @@ import 'package:elm327emu/vehicle/vehicle_state.dart';
 class _Bench {
   _Bench() {
     for (final p in [engine, tcm]) {
-      bus.attach(Ecu(profile: p, bus: bus, obd: obd, uds: UdsServices(), faults: faults));
+      final e = Ecu(profile: p, bus: bus, obd: obd, uds: UdsServices(), faults: faults);
+      ecus.add(e);
+      bus.attach(e);
     }
     bus.listen((e) {
       if (!identical(e.sender, tester)) got.add(e.frame);
@@ -28,6 +30,7 @@ class _Bench {
   final tcm = EcuProfile.transmission();
   final tester = Object();
   final got = <CanFrame>[];
+  final ecus = <Ecu>[];
 
   void send(int id, List<int> payload, {bool ext = false}) =>
       bus.transmit(CanFrame(id, segment(payload).single, extended: ext), sender: tester);
@@ -55,6 +58,18 @@ void main() {
       async.elapse(const Duration(milliseconds: 20));
       expect(b.got.map((f) => f.id), [0x7E8, 0x7E9]);
       expect(b.got[1].data, _pad([0x06, 0x41, 0x00, 0x80, 0x00, 0x00, 0x01]));
+    });
+  });
+
+  test('遅延応答の予約後に dispose すると、時間を進めても送信されない', () {
+    fakeAsync((async) {
+      final b = _Bench();
+      b.send(0x7E0, [0x01, 0x0C]);
+      async.elapse(const Duration(milliseconds: 4)); // 8ms 遅延の途中で dispose する
+      expect(b.got, isEmpty);
+      b.ecus.first.dispose();
+      async.elapse(const Duration(seconds: 2));
+      expect(b.got, isEmpty);
     });
   });
 

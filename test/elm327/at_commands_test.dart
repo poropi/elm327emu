@@ -52,27 +52,47 @@ void main() {
       expect(reply('@2'), ['SN-001 2026x']);
       expect(reply('@3OTHER0000000', raw: 'AT@3 OTHER0000000'), ['?']); // 2 回目
     });
-    test('E / L / M / H / S / R / V / D0/1 / CAF / CFC', () {
+    test('E / L / M / H / S / R / V / D0/1 / CAF / CFC（両方向）', () {
       ok('E0');
       expect(s.echo, isFalse);
+      ok('E1');
+      expect(s.echo, isTrue);
       ok('L1');
       expect(s.linefeed, isTrue);
+      ok('L0');
+      expect(s.linefeed, isFalse);
       ok('M0');
       expect(s.memory, isFalse);
+      ok('M1');
+      expect(s.memory, isTrue);
       ok('H1');
       expect(s.headers, isTrue);
+      ok('H0');
+      expect(s.headers, isFalse);
       ok('S0');
       expect(s.spaces, isFalse);
+      ok('S1');
+      expect(s.spaces, isTrue);
       ok('R0');
       expect(s.responses, isFalse);
+      ok('R1');
+      expect(s.responses, isTrue);
       ok('V1');
       expect(s.variableDlc, isTrue);
+      ok('V0');
+      expect(s.variableDlc, isFalse);
       ok('D1');
       expect(s.dlc, isTrue);
+      ok('D0');
+      expect(s.dlc, isFalse);
       ok('CAF0');
       expect(s.caf, isFalse);
+      ok('CAF1');
+      expect(s.caf, isTrue);
       ok('CFC0');
       expect(s.autoFlowControl, isFalse);
+      ok('CFC1');
+      expect(s.autoFlowControl, isTrue);
       q('E2');
     });
     test('SD / RD', () {

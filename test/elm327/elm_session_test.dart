@@ -1,6 +1,7 @@
 import 'package:fake_async/fake_async.dart';
 import 'package:test/test.dart';
 import 'package:elm327emu/can/fault_injector.dart';
+import 'package:elm327emu/can/iso_tp.dart';
 import 'package:elm327emu/elm327/elm_session.dart';
 import '../support/elm_harness.dart';
 
@@ -68,6 +69,17 @@ void main() {
       h.send('ATH1');
       expect(h.send('010C'), '18 DA F1 10 04 41 0C 0C 80 00 00 00 \r\r>');
     });
+    t('29bit の複数フレーム応答では FC をエンジン（18DA10F1）へ送る', (h, a) {
+      h.send('ATE0');
+      h.send('ATSP7');
+      final fcIds = <int>[];
+      final cancel = h.bus.listen((e) {
+        if (frameType(e.frame.data) == FrameType.flowControl) fcIds.add(e.frame.id);
+      });
+      h.send('0902');
+      cancel();
+      expect(fcIds, [0x18DA10F1]);
+    });
   });
 
   group('応答の形', () {
@@ -101,6 +113,21 @@ void main() {
     t('トランスミッション有効なら 2 行', (h, a) {
       h.quiet();
       expect(h.send('0100'), '41 00 BE 3F A0 13 \r41 00 80 00 00 01 \r\r>');
+    }, transmission: true);
+    t('トランスミッション有効時、全 ECU 宛て 0904（CALID）は 2 ECU とも複数フレームで組み立つ', (h, a) {
+      h.quiet();
+      expect(
+        h.send('0904'),
+        '013\r'
+        '0: 49 04 01 38 4B 30 \r'
+        '1: 39 30 37 31 31 35 42 \r'
+        '2: 20 20 30 30 31 30 \r'
+        '013\r'
+        '0: 49 04 01 54 43 4D \r'
+        '1: 30 41 57 33 30 30 30 \r'
+        '2: 30 30 30 30 31 00 \r'
+        '\r>',
+      );
     }, transmission: true);
     t('Mode 22: ECU 指定で応答、全 ECU 宛ては NO DATA', (h, a) {
       h.quiet();
@@ -179,6 +206,12 @@ void main() {
       h.send('ATR0');
       final d = timed(a, () => expect(h.send('010C'), '\r>'));
       expect(d, Duration.zero);
+    });
+    t('未確定のまま ATR0: SEARCHING... は出るが established は設定されない（現状の挙動）', (h, a) {
+      h.send('ATE0');
+      h.send('ATR0');
+      expect(h.send('0100'), 'SEARCHING...\r\r>');
+      expect(h.session.state.established, isNull);
     });
   });
 

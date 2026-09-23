@@ -29,6 +29,17 @@ void main() {
       expect(CanFrame(0x7E8, [1, 2]), CanFrame(0x7E8, [1, 2]));
       expect(CanFrame(0x7E8, [1, 2]) == CanFrame(0x7E8, [1, 3]), isFalse);
     });
+
+    test('rtr は既定 false、コンストラクタで true にできる', () {
+      expect(CanFrame(0x7DF, [0x01, 0x02]).rtr, isFalse);
+      expect(CanFrame(0x7DF, [], rtr: true).rtr, isTrue);
+    });
+
+    test('toString は rtr のとき末尾に RTR が付く', () {
+      expect(CanFrame(0x7DF, [], rtr: true).toString(), '7DF [0]  RTR');
+      expect(CanFrame(0x18DAF110, [], extended: true, rtr: true).toString(),
+          '18DAF110 [0]  RTR');
+    });
   });
 
   group('VirtualCanBus', () {
