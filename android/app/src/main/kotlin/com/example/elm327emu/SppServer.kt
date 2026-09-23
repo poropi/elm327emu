@@ -61,6 +61,14 @@ class SppServer(
         } catch (_: Exception) {}
     }
 
+    /** 接続中のクライアントだけ切る。readLoop が抜けて accept に戻るので待ち受けは続く。 */
+    fun disconnect() {
+        // 閉じている間に次のクライアントが接続していたら、そちらは消さない
+        val s = socket
+        try { s?.close() } catch (_: Exception) {}
+        if (socket === s) socket = null
+    }
+
     fun stop() {
         running = false
         try { socket?.close() } catch (_: Exception) {}

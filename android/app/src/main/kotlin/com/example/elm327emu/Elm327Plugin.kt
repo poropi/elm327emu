@@ -35,6 +35,13 @@ class Elm327Plugin(private val context: Context) {
                     if (t == "ble") ble?.send(bytes) else spp?.send(bytes)
                     result.success(null)
                 }
+                "disconnect" -> {
+                    when (call.argument<String>("transport")) {
+                        "ble" -> ble?.disconnect()
+                        "spp" -> spp?.disconnect()
+                    }
+                    result.success(null)
+                }
                 else -> result.notImplemented()
             }
         }

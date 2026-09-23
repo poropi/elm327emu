@@ -18,7 +18,10 @@ class Elm327App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'ELM327 Emulator',
-      theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
+      theme: ThemeData(
+        colorSchemeSeed: const Color(0xFF0F5F56),
+        useMaterial3: true,
+      ),
       home: const HomePage(),
     );
   }

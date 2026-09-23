@@ -10,6 +10,8 @@ class BleGattServer: NSObject, CBPeripheralManagerDelegate {
     private var useFff0 = false
     private var pendingStart = false
     private var pending: [Data] = []
+    /// disconnect() が予約した再開。stop() と次の disconnect() で取り消す。
+    private var restart: DispatchWorkItem?
 
     init(onRx: @escaping (Data) -> Void, onConn: @escaping (String, String) -> Void) {
         self.onRx = onRx
@@ -94,11 +96,31 @@ class BleGattServer: NSObject, CBPeripheralManagerDelegate {
     }
 
     func stop() {
+        restart?.cancel()
+        restart = nil
+        pendingStart = false
         manager.stopAdvertising()
         manager.removeAllServices()
         notifyChar = nil
         central = nil
         pending = []
+    }
+
+    /// 疑似切断。CoreBluetooth のペリフェラル側には相手を切る API がないため、
+    /// サービスを外して広告を止め、0.5 秒後に登録し直す。相手からは「サービスが無効になった」と見える。
+    /// 再開待ちのあいだに呼ばれた 2 回目は、予約を取り消して掛け直すだけで disconnected は出さない。
+    func disconnect() {
+        let alreadyDown = restart != nil
+        let fff0 = useFff0
+        let id = central?.identifier.uuidString ?? ""
+        stop()
+        if !alreadyDown { onConn("disconnected", id) }
+        let item = DispatchWorkItem { [weak self] in
+            self?.restart = nil
+            self?.start(useFff0: fff0)
+        }
+        restart = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: item)
     }
 
     func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
