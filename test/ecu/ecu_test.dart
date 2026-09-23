@@ -221,4 +221,110 @@ void main() {
       expect(b.got, isEmpty);
     });
   });
+
+  group('要求者ごとの分離（最終レビュー I3）', () {
+    test('応答（SF・FF・CF・7F 78）はすべて要求した送信元を replyTo に持つ', () {
+      fakeAsync((async) {
+        final b = _Bench();
+        final events = <BusEvent>[];
+        b.bus.listen((e) {
+          if (e.sender is Ecu) events.add(e);
+        });
+        b.send(0x7DF, [0x01, 0x0C]);
+        b.send(0x7E0, [0x09, 0x02]);
+        async.elapse(const Duration(milliseconds: 8));
+        b.bus.transmit(CanFrame(0x7E0, flowControl()), sender: b.tester);
+        async.elapse(const Duration(milliseconds: 10));
+        b.cfg.responsePending = true;
+        b.send(0x7E0, [0x01, 0x0D]);
+        async.elapse(const Duration(milliseconds: 1100));
+        expect(events.map((e) => e.frame.data[0] >> 4), [0, 1, 2, 2, 0, 0]);
+        expect(events.every((e) => identical(e.replyTo, b.tester)), isTrue);
+      });
+    });
+
+    test('FC は、その FC を送った要求者への送信にだけ効く', () {
+      fakeAsync((async) {
+        final b = _Bench();
+        final other = Object();
+        b.send(0x7E0, [0x09, 0x02]);
+        async.elapse(const Duration(milliseconds: 8));
+        b.bus.transmit(CanFrame(0x7E0, flowControl()), sender: other);
+        async.elapse(const Duration(milliseconds: 10));
+        Iterable<int> pci() =>
+            b.got.where((f) => f.id == 0x7E8).map((f) => f.data[0]);
+        expect(pci(), [0x10]); // 他の要求者の FC では CF を出さない
+        b.bus.transmit(CanFrame(0x7E0, flowControl()), sender: b.tester);
+        async.elapse(const Duration(milliseconds: 10));
+        expect(pci(), [0x10, 0x21, 0x22]);
+      });
+    });
+
+    test('2 つの要求者の複数フレームを並行して送り、それぞれの FC で進む', () {
+      fakeAsync((async) {
+        final b = _Bench();
+        final other = Object();
+        final byReplyTo = <Object?, List<int>>{};
+        b.bus.listen((e) {
+          if (e.sender is Ecu) {
+            (byReplyTo[e.replyTo] ??= []).add(e.frame.data[0]);
+          }
+        });
+        b.send(0x7E0, [0x09, 0x02]);
+        b.bus.transmit(
+          CanFrame(0x7E0, segment([0x09, 0x04]).single),
+          sender: other,
+        );
+        async.elapse(const Duration(milliseconds: 8));
+        b.bus.transmit(CanFrame(0x7E0, flowControl()), sender: other);
+        async.elapse(const Duration(milliseconds: 10));
+        expect(byReplyTo[b.tester], [0x10]);
+        expect(byReplyTo[other], [0x10, 0x21, 0x22]);
+        b.bus.transmit(CanFrame(0x7E0, flowControl()), sender: b.tester);
+        async.elapse(const Duration(milliseconds: 10));
+        expect(byReplyTo[b.tester], [0x10, 0x21, 0x22]);
+        expect(b.ecus.first.pendingTransfers, 0);
+      });
+    });
+
+    test('FC が来ないまま 1000ms 経った送信状態は捨てる（リークしない）', () {
+      fakeAsync((async) {
+        final b = _Bench();
+        b.send(0x7E0, [0x09, 0x02]);
+        b.bus.transmit(
+          CanFrame(0x7E0, segment([0x09, 0x04]).single),
+          sender: Object(),
+        );
+        async.elapse(const Duration(milliseconds: 8));
+        expect(b.ecus.first.pendingTransfers, 2);
+        async.elapse(const Duration(milliseconds: 1000));
+        expect(b.ecus.first.pendingTransfers, 0);
+      });
+    });
+
+    test('dispose はすべての要求者の送信を止める', () {
+      fakeAsync((async) {
+        final b = _Bench();
+        final other = Object();
+        b.send(0x7E0, [0x09, 0x02]);
+        b.bus.transmit(
+          CanFrame(0x7E0, segment([0x09, 0x04]).single),
+          sender: other,
+        );
+        async.elapse(const Duration(milliseconds: 8));
+        b.bus.transmit(
+          CanFrame(0x7E0, flowControl(stMin: 5)),
+          sender: b.tester,
+        );
+        b.bus.transmit(CanFrame(0x7E0, flowControl(stMin: 5)), sender: other);
+        async.elapse(const Duration(milliseconds: 6));
+        final before = b.got.length;
+        b.ecus.first.dispose();
+        async.elapse(const Duration(seconds: 2));
+        expect(b.got.length, before);
+        expect(b.ecus.first.pendingTransfers, 0);
+        expect(async.pendingTimers, isEmpty);
+      });
+    });
+  });
 }

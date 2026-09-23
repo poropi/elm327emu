@@ -247,6 +247,11 @@ class ElmSession {
     if (_mode != SessionMode.busy || p == null) return;
     // 周期フレームは応答の収集にも待ち時間の再設定にも使わない（監視では表示する）。
     if (e.sender is PeriodicTraffic) return;
+    // 同じバスを共有する他のセッションの要求・FC と、他のセッションへの応答は使わない。
+    // replyTo のないフレーム（宛先を持たないノード）は従来どおりフィルタで判断する。
+    if (e.sender is ElmSession) return;
+    final replyTo = e.replyTo;
+    if (replyTo != null && !identical(replyTo, this)) return;
     if (p.dropped || !state.acceptsResponse(f)) return;
     final lines = formatter.frameLines(f);
     final reassembler = p.reassemblerFor(f.id);

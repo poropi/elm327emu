@@ -5,7 +5,13 @@ import 'package:elm327emu/can/virtual_can_bus.dart';
 class _Recorder implements BusNode {
   final frames = <CanFrame>[];
   @override
-  void onFrame(CanFrame frame) => frames.add(frame);
+  void onEvent(BusEvent event) => frames.add(event.frame);
+}
+
+class _EventRecorder implements BusNode {
+  final events = <BusEvent>[];
+  @override
+  void onEvent(BusEvent event) => events.add(event);
 }
 
 void main() {
@@ -62,6 +68,19 @@ void main() {
       expect(b.frames, [f]);
       expect(seen.single.frame, f);
       expect(seen.single.sender, same(a));
+    });
+
+    test('replyTo はリスナーとノードの両方に届く', () {
+      final bus = VirtualCanBus();
+      final seen = <BusEvent>[];
+      final node = _EventRecorder();
+      bus.attach(node);
+      bus.listen(seen.add);
+      final requester = Object();
+      bus.transmit(CanFrame(0x7E8, [0]), sender: Object(), replyTo: requester);
+      bus.transmit(CanFrame(0x0C9, [0]));
+      expect(seen.map((e) => e.replyTo), [same(requester), isNull]);
+      expect(node.events.map((e) => e.replyTo), [same(requester), isNull]);
     });
 
     test('detach したノードと解除したリスナーには配らない', () {
