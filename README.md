@@ -7,6 +7,10 @@ ELM327 OBD-II アダプタのソフトウェアエミュレータ。自作 OBD �
 - **macOS**: BLE のみ（Classic SPP 不可）。開発用に TCP でも待ち受けられる
 - **iOS**: 非対応
 
+> **未確認**: 実機の Bluetooth（BLE / SPP）での接続と、Torque・Car Scanner などの市販クライアントでの動作は確かめていない。
+> 確かめたのは単体テスト（`flutter test`）と、TCP 経由の python-OBD 0.7.3（[tool/python_obd_check](tool/python_obd_check/README.md)）まで。
+> 実機での確認手順は末尾の「手動結合確認チェックリスト」にある。
+
 ---
 
 ## アーキテクチャ
@@ -18,7 +22,7 @@ ELM327 OBD-II アダプタのソフトウェアエミュレータ。自作 OBD �
 ElmSession（1 接続に 1 つ）
   ├─ LineAssembler … バイト → コマンド行
   ├─ AtCommands … AT を表で処理 → ElmState を更新
-  ├─ RequestRouter … OBD/UDS 行 → ISO-TP 単一フレーム → バスへ。応答フレームを集めて ISO-TP 復元
+  ├─ （ElmSession 本体）… OBD/UDS 行 → ISO-TP 単一フレーム → バスへ。応答フレームを集めて ISO-TP 復元
   └─ ResponseFormatter … 復元したメッセージ／フレームを ElmState に従って文字列化
   │  CanFrame
   ▼
