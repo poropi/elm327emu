@@ -4,13 +4,16 @@ import 'package:provider/provider.dart';
 import '../app/emulator_controller.dart';
 import 'common.dart';
 import 'connection_tab.dart';
+import 'dtc_tab.dart';
+import 'ecu_tab.dart';
+import 'faults_tab.dart';
 import 'log_tab.dart';
 import 'vehicle_tab.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
-  static const tabs = ['接続', '車両', 'ログ'];
+  static const tabs = ['接続', '車両', 'DTC', 'ECU', '障害', 'ログ'];
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +43,9 @@ class HomePage extends StatelessWidget {
           body: TabBarView(children: [
             ConnectionTab(onShowLog: () => DefaultTabController.of(context).animateTo(tabs.indexOf('ログ'))),
             const VehicleTab(),
+            const DtcTab(),
+            const EcuTab(),
+            const FaultsTab(),
             const LogTab(),
           ]),
         );
