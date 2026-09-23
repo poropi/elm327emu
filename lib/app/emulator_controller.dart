@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import '../can/fault_injector.dart';
 import '../can/periodic_traffic.dart';
@@ -115,7 +116,11 @@ class EmulatorController extends ChangeNotifier {
     if (state == 'connected') {
       connState[t] = device.isEmpty ? '接続中' : '接続中 · $device';
     } else {
-      connState[t] = '待ち受け中';
+      // 停止済み（stopBle/stopSpp で connState[t] が消えている）のに遅れて届いた
+      // disconnected イベントでは、待ち受け中と誤表示しない。
+      if (connState.containsKey(t)) {
+        connState[t] = '待ち受け中';
+      }
       sessions.remove(t)?.dispose();
     }
     _log(LogKind.info, '[${t.label}] $state $device'.trim());
@@ -186,10 +191,16 @@ class EmulatorController extends ChangeNotifier {
 
   Future<void> disconnect(TransportType t) async {
     _log(LogKind.fault, '${t.label} を切断');
-    if (t == TransportType.tcp) {
-      await tcp.disconnect();
-    } else {
-      await bridge.disconnect(t);
+    try {
+      if (t == TransportType.tcp) {
+        await tcp.disconnect();
+      } else {
+        await bridge.disconnect(t);
+      }
+    } on MissingPluginException catch (e) {
+      _log(LogKind.info, '${t.label} の切断に失敗: $e');
+    } on PlatformException catch (e) {
+      _log(LogKind.info, '${t.label} の切断に失敗: $e');
     }
   }
 

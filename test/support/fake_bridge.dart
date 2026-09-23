@@ -10,6 +10,9 @@ class FakeTransportBridge extends TransportBridge {
   final sent = <(TransportType, List<int>)>[];
   final calls = <String>[];
 
+  /// テストで disconnect の失敗を再現するための例外（transport ごと）。
+  final Map<TransportType, Object> disconnectErrors = {};
+
   String sentText(TransportType t) => sent.where((e) => e.$1 == t).map((e) => String.fromCharCodes(e.$2)).join();
 
   @override
@@ -29,5 +32,9 @@ class FakeTransportBridge extends TransportBridge {
   @override
   Future<void> stopSpp() async => calls.add('stopSpp');
   @override
-  Future<void> disconnect(TransportType t) async => calls.add('disconnect:${t.wire}');
+  Future<void> disconnect(TransportType t) async {
+    calls.add('disconnect:${t.wire}');
+    final e = disconnectErrors[t];
+    if (e != null) throw e;
+  }
 }

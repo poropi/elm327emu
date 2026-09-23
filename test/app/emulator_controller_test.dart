@@ -1,4 +1,5 @@
 import 'package:fake_async/fake_async.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:elm327emu/app/emulator_controller.dart';
 import 'package:elm327emu/can/fault_injector.dart';
@@ -103,6 +104,63 @@ void main() {
       async.flushMicrotasks();
       expect(b.calls, ['startBle:true', 'disconnect:ble']);
       expect(c.statusText(TransportType.ble), '待ち受け中');
+      c.dispose();
+    });
+  });
+
+  test('disconnect はブリッジの MissingPluginException/PlatformException を捕まえて info ログにする', () {
+    fakeAsync((async) {
+      final (c, b) = make(async);
+      c.startBle();
+      c.startSpp();
+      async.flushMicrotasks();
+
+      b.disconnectErrors[TransportType.ble] =
+          MissingPluginException('elm327/control#disconnect');
+      c.disconnect(TransportType.ble);
+      async.flushMicrotasks();
+      expect(c.log.last.kind, LogKind.info);
+      expect(c.log.last.text, contains('BLE'));
+
+      b.disconnectErrors[TransportType.spp] = PlatformException(code: 'boom');
+      c.disconnect(TransportType.spp);
+      async.flushMicrotasks();
+      expect(c.log.last.kind, LogKind.info);
+      expect(c.log.last.text, contains('SPP'));
+      c.dispose();
+    });
+  });
+
+  test('disconnectAll は1つが例外を投げても残りの transport を切断する', () {
+    fakeAsync((async) {
+      final (c, b) = make(async);
+      c.startBle();
+      c.startSpp();
+      async.flushMicrotasks();
+      b.conn.add((transport: TransportType.ble, state: 'connected', device: 'AA'));
+      b.conn.add((transport: TransportType.spp, state: 'connected', device: 'BB'));
+
+      b.disconnectErrors[TransportType.ble] = PlatformException(code: 'boom');
+      c.disconnectAll();
+      async.flushMicrotasks();
+      expect(b.calls, containsAll(['disconnect:ble', 'disconnect:spp']));
+      c.dispose();
+    });
+  });
+
+  test('停止済みの transport に遅れて届いた disconnected イベントは待ち受け中に戻さない', () {
+    fakeAsync((async) {
+      final (c, b) = make(async);
+      c.startBle();
+      async.flushMicrotasks();
+      b.conn.add((transport: TransportType.ble, state: 'connected', device: 'AA'));
+      c.stopBle();
+      async.flushMicrotasks();
+      expect(c.connState.containsKey(TransportType.ble), isFalse);
+
+      // ネイティブ側から遅れて届いた切断イベント。
+      b.conn.add((transport: TransportType.ble, state: 'disconnected', device: 'AA'));
+      expect(c.connState.containsKey(TransportType.ble), isFalse);
       c.dispose();
     });
   });
