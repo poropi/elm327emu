@@ -54,8 +54,7 @@ class ElmSession {
   late final void Function() _unlisten;
   SessionMode _mode = SessionMode.idle;
   _Pending? _pending;
-  // ignore: unused_field
-  _Monitor? _monitor; // Task 11 の監視で読む
+  _Monitor? _monitor;
   Timer? _timer;
   bool _disposed = false;
 
@@ -255,8 +254,14 @@ class ElmSession {
     _arm(wait);
   }
 
-  /// 監視の中身は Task 11 で足す。
-  void _onMonitorFrame(CanFrame f) {}
+  void _onMonitorFrame(CanFrame f) {
+    final m = _monitor;
+    if (m == null) return;
+    if (!state.acceptsMonitor(f, receiver: m.receiver, transmitter: m.transmitter)) return;
+    for (final line in formatter.frameLines(f, monitor: true)) {
+      _emit('$line$_eol');
+    }
+  }
 
   int _flowControlId(CanFrame f) => f.extended
       ? (f.id & 0xFFFF0000) | ((f.id & 0xFF) << 8) | ((f.id >> 8) & 0xFF)

@@ -33,6 +33,7 @@ class ElmHarness {
   late final ObdServices obd;
   late final ElmSession session;
   final StringBuffer _out = StringBuffer();
+  int _read = 0;
 
   ElmSession newSession({StringBuffer? sink}) {
     final s = ElmSession(bus: bus, faults: faults, voltage: () => vehicle.batteryVoltage);
@@ -46,7 +47,7 @@ class ElmHarness {
   String send(String cmd) => sendRaw('$cmd\r', untilPrompt: true);
 
   String sendRaw(String raw, {bool untilPrompt = false, Duration elapse = Duration.zero}) {
-    final start = _out.length;
+    final start = _read;
     session.input(raw.codeUnits);
     if (untilPrompt) {
       for (var i = 0; i < 20000 && !_out.toString().substring(start).endsWith('>'); i++) {
@@ -55,7 +56,8 @@ class ElmHarness {
     } else {
       async.elapse(elapse);
     }
-    return _out.toString().substring(start);
+    _read = _out.length;
+    return _out.toString().substring(start, _read);
   }
 
   /// エコーを切り、0100 でプロトコルを確定させる（以後 SEARCHING... が出ない）。
